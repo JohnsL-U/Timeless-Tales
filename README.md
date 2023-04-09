@@ -11,7 +11,7 @@ The  is a platform for users to create and share posts about their unforgettable
 To get started with the project, please follow the instructions below:
 
 1. Clone the repository to your local machine:
-git clone https://github.com/JohnsL-U/Project-1.git
+git clone https://github.com/JohnsL-U/Timeless-Tales.git
 
 2. Create a virtual environment and activate it:
 virtualenv venv
@@ -35,16 +35,6 @@ I welcome contributions from anyone who is interested in improving the project. 
 ## Contact
 
 If you have any questions or suggestions, please feel free to contact me. I would love to hear from you!
-
-
-
-
-
-
-
-
-
-
 
 
 # Timeless-Tales
