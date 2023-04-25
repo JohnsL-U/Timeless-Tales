@@ -179,12 +179,7 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Ignore image files
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.bmp
+/media/
 
 # Ignore video files
 *.mp4

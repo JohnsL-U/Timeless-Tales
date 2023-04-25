@@ -9,10 +9,24 @@ class Post(models.Model):
     description = models.TextField()
     image = models.ImageField(upload_to='images/', null=True, blank=True)
     video = models.FileField(upload_to='videos/', null=True, blank=True)
-    created_date = models.DateTimeField(default=timezone.now)
-    published_date = models.DateTimeField(blank=True, null=True)
-    tags = models.ManyToManyField('Tag')
+    created_date = models.DateField(default=timezone.now)
+    published_date = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=200, blank=True)
+    likes_count = models.PositiveIntegerField(default=0)
+    CATEGORY_CHOICES = (
+    ('military', 'Military'),
+    ('social', 'Social'),
+    ('political', 'Political'),
+    ('economic', 'Economic'),
+    ('technological', 'Technological'),
+    ('intellectual', 'Intellectual'),
+    ('environmental', 'Environmental'),
+    ('medical', 'Medical'),
+    ('artistic', 'Artistic'),
+    ('religious', 'Religious')
+)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, null=True, blank=True)
+    
 
     def publish(self):
         self.published_date = timezone.now()
@@ -20,17 +34,38 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+    
+class Comment(models.Model):
+    post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_date = models.DateField(auto_now_add=True)
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    bio = models.CharField(max_length=500, blank=True)
-    profile_pic = models.ImageField(upload_to='profile_pics', blank=True)
+class Like(models.Model):
+    post = models.ForeignKey(Post, related_name='likes', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.CharField(max_length=255)
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
 
-class Tag(models.Model):
-    name = models.CharField(max_length=50)
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
-        return self.name
+        return self.text
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE,related_name='profile')
+    about = models.CharField(max_length=500, blank=True)
+    profile_pic = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    background_pic = models.ImageField(upload_to='background_pictures/', null=True, blank=True)
+    following = models.ManyToManyField(User, related_name='followers', blank=True)
+    join_date = models.DateField(default=timezone.now)
 
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+    
