@@ -2,13 +2,14 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField()
     image = models.ImageField(upload_to='images/', null=True, blank=True)
-    video = models.FileField(upload_to='videos/', null=True, blank=True)
     created_date = models.DateField(default=timezone.now)
     published_date = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=200, blank=True)
@@ -61,11 +62,16 @@ class Notification(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,related_name='profile')
     about = models.CharField(max_length=500, blank=True)
-    profile_pic = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    profile_pic = models.ImageField(upload_to='profile_pictures/', default='images/default_profile_pic.png')
     background_pic = models.ImageField(upload_to='background_pictures/', null=True, blank=True)
     following = models.ManyToManyField(User, related_name='followers', blank=True)
     join_date = models.DateField(default=timezone.now)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
-    
+
+    @receiver(post_save, sender=User)
+    def create_UserProfile(sender, instance, created, **kwargs):
+        if created:
+            UserProfile.objects.create(user=instance)
+        
