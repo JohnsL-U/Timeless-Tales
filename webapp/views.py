@@ -59,6 +59,7 @@ def home(request):
     user_posts = Post.objects.filter(user=request.user)
     followed_users = request.user.profile.following.all()
     followed_posts = Post.objects.filter(user__in=followed_users)
+    current_user = request.user
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
@@ -70,7 +71,7 @@ def home(request):
             return redirect('webapp:home')
     else:
         form = PostForm()
-    return render(request, 'webapp/home.html', {'posts': user_posts, 'form': form, 'followed_posts': followed_posts})
+    return render(request, 'webapp/home.html', {'posts': user_posts, 'form': form, 'followed_posts': followed_posts, 'current_user': request.user})
 
 
 
