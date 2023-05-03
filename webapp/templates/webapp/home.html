@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block extra_head %}
+<!-- Include jQuery if not already included -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Include the PlacesField widget's static files -->
+<link rel="stylesheet" href="{% static 'places/css/places.css' %}">
+<script src="{% static 'places/js/places.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="home-page">
+    <!-- User header section -->
+    <div class="user-header" {% if user.profile.background_pic %}style="background-image: url('{{ user.profile.background_pic.url }}');"{% else %}style="background-image: url('{% static 'images/default_background_pic.jpg' %}');"{% endif %}>
+        <div class="profile-info">
+            <div class="profile-pic-container">
+                {% if user.profile.profile_pic %}
+                    <img src="{{ user.profile.profile_pic.url }}" alt="Profile Picture" class="profile-pic">
+                {% else %}
+                    <img src="{% static 'images/default_profile_pic.png' %}" alt="Default Profile Picture" class="profile-pic">
+                {% endif %}
+            </div>
+            <div class="profile-details">
+                <div class="profile-name">
+                    <h2>{{ current_user.username }}</h2>
+                </div>
+                <div class="profile-followers-following">
+                    <p>Followers: {{ current_user.profile.followers.count }}</p>
+                    <p>Following: {{ current_user.profile.following.count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Profile bar -->
+    <div class="profile-bar">
+        <a href="{% url 'webapp:post_search' %}" onclick="togglePosts();">Posts</a>
+        <a href="{% url 'webapp:user_profile' %}" onclick="toggleProfile();">Profile</a>
+    </div>
+    <div class="post-list">
+        <div class="followed-posts">
+            <h2>Posts from Followed</h2>
+            <ul>
+                {% for post in followed_posts %}
+                    <li>
+                        <a href="{% url 'webapp:post_detail' post.id %}">{{ post.title }}</a>
+                        <p>{{ post.description|truncatewords:20 }}</p>
+                    </li>
+                {% empty %}
+                    <li>You are not following any users or they have not created any posts yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="my-posts">
+            <h2>My Posts</h2>
+            <ul>
+                {% for post in posts %}
+                    <li>
+                        <a href="{% url 'webapp:post_detail' post.id %}">{{ post.title }}</a>
+                        <p>{{ post.description|truncatewords:20 }}</p>
+                    </li>
+                {% empty %}
+                    <li>You have not created any posts yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="create-post">
+        <h2>Create a new post:</h2>
+        <form method="post" action="{% url 'webapp:home' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="dropdown">
+                <button class="dropdown-btn">Categories</button>
+                <div class="dropdown-content">
+                  {% for category in categories %}
+                    <label>
+                      <input type="checkbox" name="category" value="{{ category.0 }}" {% if category.0 in chosen_categories %}checked{% endif %}>
+                      {{ category.1 }}
+                    </label>
+                  {% endfor %}
+                  <button type="submit">Submit</button>
+                </div>
+              </div>           
+            <button type="submit">Publish Your Post</button>
+        </form>       
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function hideAllSections() {
+    document.querySelector('.user_profile').style.display = 'none';
+    document.querySelector('.posts-list').style.display = 'none';
+}
+
+function toggleSection(sectionClass) {
+    hideAllSections();
+    const section = document.querySelector(sectionClass);
+    section.style.display = 'block';
+}
+
+function toggleProfile() {
+    toggleSection('.user_profile');
+}
+
+function togglePosts() {
+    toggleSection('.posts-list');
+}
+
+document.querySelector('.dropdown-btn').addEventListener('click', function() {
+      var content = document.querySelector('.dropdown-content');
+      content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    });
+</script>
+{% endblock %}

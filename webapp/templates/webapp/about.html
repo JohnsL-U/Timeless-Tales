@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+  <div class="about-page">
+    <div class="about-section">
+      <h3>The Full Story</h3>
+      <div class="about-header">
+        <h1>About Us</h1>
+      </div>
+      <p>Welcome to our living history sharing website! We are a community of passionate history enthusiasts, storytellers, and learners who believe that the past is an essential part of our present and future. Our platform provides a space for individuals from all backgrounds to share and explore the personal stories and experiences that make history come alive.</p>
+    </div>
+    <div class="mission">
+      <img src="{% static 'images/mission.png' %}" alt="Mission Image">
+      <div class="mission-text">
+        <h2>Mission</h2>
+        <p>Our platform provides a space for users to connect with others who share their passion for history, and to engage in meaningful dialogue about the past. By facilitating the sharing of personal experiences and perspectives, we hope to foster a deeper appreciation for the diversity of human experiences throughout history. Ultimately, our goal is to create a vibrant and inclusive community that celebrates the richness and complexity of our shared history.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

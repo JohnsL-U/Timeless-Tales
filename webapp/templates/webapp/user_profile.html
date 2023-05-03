@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+<div class="profile-page">
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <!-- User header section -->
+    <div class="user-header" {% if user.profile.background_pic %}style="background-image: url('{{ user.profile.background_pic.url }}');"{% endif %}>
+        <div class="profile-info">
+            <div class="profile-pic-container">
+                {% if user.profile.profile_pic %}
+                    <img src="{{ user.profile.profile_pic.url }}" alt="Profile Picture" class="profile-pic">
+                {% else %}
+                    <img src="{% static 'images/default_profile_pic.png' %}" alt="Default Profile Picture" class="profile-pic">
+                {% endif %}
+            </div>
+            <div class="profile-details">
+                <div class="profile-name">
+                    <h2>{{ current_user.username }}</h2>
+                </div>
+                <div class="profile-followers-following">
+                    <p>Followers: {{ current_user.profile.followers.count }}</p>
+                    <p>Following: {{ current_user.profile.following.count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Profile bar -->
+    <div class="profile-bar">
+        <a href="#" onclick="toggleMyPosts();">My Posts</a>
+        <a href="#" onclick="toggleComments();">Comments</a>
+        <a href="#" onclick="toggleNotifications();">Notifications</a>
+        <a href="#" onclick="toggleSettings();">Settings</a>
+    </div>
+    <div class="profile-edit-joined">
+        <div class="profile-joined">
+            <h3>Profile</h3>
+            <p>Joined: {{ current_user.date_joined }}</p>
+        </div>
+        <button class="edit-profile-btn" onclick="toggleEditProfileForm();toggleAboutSection();">Edit Profile</button>
+    </div>
+    <!-- My Posts list (hidden by default) -->
+    <div class="my-posts-list" style="display:none;">
+        <h3>My Posts</h3>
+        <ul>
+            {% for post in posts %}
+                <li>
+                    <a href="{% url 'webapp:post_detail' post.id %}">{{ post.title }}</a>
+                    <p>{{ post.description|truncatewords:20 }}</p>
+                </li>
+            {% empty %}
+                <li>You have not created any posts yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <!-- Notifications list (hidden by default) -->
+    <div class="notifications-list" style="display:none;">
+        <h3>Notifications</h3>
+        <ul>
+            {% for notification in notifications %}
+                <li>{{ notification.text }}</li>
+            {% empty %}
+                <li>No notifications</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <!-- Comments list (hidden by default) -->
+    <div class="comments-list" style="display:none;">
+        <h3>Comments</h3>
+        <ul>
+            {% for comment in comments %}
+                <li>{{ comment.user.username }} - {{ comment.created_date }}<br>{{ comment.content }}</li>
+            {% empty %}
+                <li>No comments yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <!-- Settings section (hidden by default) -->
+    <div class="settings-section" style="display:none;">
+        <h3>Settings</h3>
+        <form method="post" action="{% url 'webapp:password_change' %}">
+            {% csrf_token %}
+            <label for="old_password">Old Password:</label>
+            <input type="password" id="old_password" name="old_password" required>
+            <label for="new_password1">New Password:</label>
+            <input type="password" id="new_password1" name="new_password1" required>
+            <label for="new_password2">Confirm New Password:</label>
+            <input type="password" id="new_password2" name="new_password2" required>
+            <button type="submit">Change Password</button>
+        </form>
+    </div>
+    <!-- About sections -->
+    <div class="about" contentEditable="true" id="about-section">
+        <h3>About</h3>
+        <p>{{ current_user.profile.about }}</p>
+    </div>
+    <!-- Edit profile form (hidden by default) -->
+    <form id="edit-profile-form" method="post" action="{% url 'webapp:user_profile' current_user.username %}" enctype="multipart/form-data" style="display:none;">
+        {% csrf_token %}
+        <h3>Edit Profile</h3>
+        <label for="{{ form.profile_pic.auto_id }}">Profile Picture:</label>
+        {{ form.profile_pic }}
+        <br>
+        <label for="{{ form.background_pic.auto_id }}">Background Picture:</label>
+        {{ form.background_pic }}
+        <br>
+        {{ form.about.label_tag }} {{ form.about }}
+        <button type="submit">Save Changes</button>
+    </form>
+</div>
+{% endblock %} 
+
+{% block extra_js %}
+<script>
+function hideAllSections() {
+    document.querySelector('.comments-list').style.display = 'none';
+    document.querySelector('.notifications-list').style.display = 'none';
+    document.querySelector('.settings-section').style.display = 'none';
+    document.querySelector('.my-posts-list').style.display = 'none';
+}
+
+function toggleSection(sectionClass) {
+    hideAllSections();
+    const section = document.querySelector(sectionClass);
+    section.style.display = 'block';
+}
+
+function toggleComments() {
+    toggleSection('.comments-list');
+}
+
+function toggleNotifications() {
+    toggleSection('.notifications-list');
+}
+
+function toggleSettings() {
+    toggleSection('.settings-section');
+}
+
+function toggleMyPosts() {
+    toggleSection('.my-posts-list');
+}
+
+function toggleEditProfileForm() {
+        const editProfileForm = document.getElementById('edit-profile-form');
+        editProfileForm.style.display = editProfileForm.style.display === 'none' ? 'block' : 'none';
+        toggleAboutSection();
+    }
+
+document.getElementById("edit-profile-form").addEventListener("submit", function(event) {
+        console.log("Form submitted");
+    });
+
+function followUser(userId) {
+    fetch(`/follow/${userId}/`, { method: "POST" })
+        .then((response) => {
+            if (response.ok) {
+                document.getElementById("follow-unfollow-btn").innerText = "Unfollow";
+                document.getElementById("follow-unfollow-btn").onclick = () => unfollowUser(userId);
+            }
+        });
+}
+
+function unfollowUser(userId) {
+    fetch(`/unfollow/${userId}/`, { method: "POST" })
+        .then((response) => {
+            if (response.ok) {
+                document.getElementById("follow-unfollow-btn").innerText = "Follow";
+                document.getElementById("follow-unfollow-btn").onclick = () => followUser(userId);
+            }
+        });
+}
+
+</script>
+{% endblock %}
+
+
+
+
+
+

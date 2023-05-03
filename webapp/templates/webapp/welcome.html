@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+        <div class="catchphrase">
+            <h2>Journey Through Time...Immerse Yourself in the Charm of Living History</h2>
+        </div>
+        <div class="information info-container">
+            <div class="info1">
+                <i class="fas fa-pencil-alt"></i>
+                <h3>Create, Customize...</h3>
+                <p>A profile page with your unique stories. Give it a theme. Bring it to life!</p>
+            </div>
+            <div class="info2">
+                <i class="fas fa-tag"></i>
+                <h3>Tag!</h3>
+                <p>Tell us where your stories took place. Categorize them. Help other users relive your memory!</p>
+            </div>
+            <div class="info3">
+                <i class="fas fa-handshake"></i>
+                <h3>Interact</h3>
+                <p>Don't be shy, like and comment on stories. Highlight your favorites on your profile.</p>
+            </div>
+        </div>        
+        <div class="form-container">
+            <div class="signup-form">
+            <form method="post" action="{% url 'webapp:welcome' %}">
+                <h1>Get Started for Free</h1>
+                <h2>Sign Up by completing the form below</h2>
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Sign up</button>
+                <h3>*By clicking sign up, you are agreeing the terms of use.</h3>
+            </form>
+            </div>
+            <div class="welcome-image">
+                <img src="{% static 'images/Welcome.png' %}" alt="Welcome Picture">
+            </div>      
+        </div>
+{% endblock %}
+
