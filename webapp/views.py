@@ -59,6 +59,7 @@ def home(request):
     user_posts = Post.objects.filter(user=request.user)
     followed_users = request.user.profile.following.all()
     followed_posts = Post.objects.filter(user__in=followed_users)
+    chosen_categories = request.GET.getlist('category')
     current_user = request.user
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
@@ -71,7 +72,16 @@ def home(request):
             return redirect('webapp:home')
     else:
         form = PostForm()
-    return render(request, 'webapp/home.html', {'posts': user_posts, 'form': form, 'followed_posts': followed_posts, 'current_user': request.user})
+    context = {
+        'posts': user_posts, 
+        'form': form, 
+        'followed_posts': followed_posts, 
+        'current_user': request.user,
+        'chosen_categories': chosen_categories,
+        'categories': Post.CATEGORY_CHOICES,
+    }
+  
+    return render(request, 'webapp/home.html', context)
 
 
 
@@ -79,30 +89,45 @@ def home(request):
 def post_search(request):
     chosen_categories = request.GET.getlist('category')
     search_query = request.GET.get('search')
+    search_season = request.GET.get('season')
+    decades = [decade for decade in range(1900, 2030, 10)]
 
-    if chosen_categories:
-        posts = Post.objects.filter(
-            Q(published_date__lte=timezone.now()) & Q(category__in=chosen_categories)
-        ).order_by('published_date')
-    else:
-        posts = Post.objects.filter(
-            published_date__lte=timezone.now()
-        ).order_by('published_date')
+    posts = Post.objects.all()
 
     if search_query:
-        posts = posts.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query))
+        posts = posts.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query) | Q(created_date__year=search_query))
+        if search_query.isdigit():
+            start_decade = int(search_query[:3] + "0")
+            end_decade = int(search_query[:3] + "9")
+            posts = posts.filter(Q(created_date__year__range=(start_decade, end_decade)) | Q(created_date__year=search_query))
+    if search_season:
+        if search_season == 'winter':
+            posts = posts.filter(created_date__month__in=[12, 1, 2])
+        elif search_season == 'spring':
+            posts = posts.filter(created_date__month__in=[3, 4, 5])
+        elif search_season == 'summer':
+            posts = posts.filter(created_date__month__in=[6, 7, 8])
+        elif search_season == 'autumn':
+            posts = posts.filter(created_date__month__in=[9, 10, 11])
+
+    if chosen_categories:
+        posts = posts.filter(Q(category__in=chosen_categories)).order_by('created_date')
+    else:
+        posts = posts.order_by('created_date')
 
     recent_posts = Post.objects.filter(
-        published_date__lte=timezone.now()
-    ).order_by('-published_date')[:5]
+        created_date__lte=timezone.now()
+    ).order_by('-created_date')[:5]
 
     context = {
         'posts': posts,
         'chosen_categories': chosen_categories,
         'categories': Post.CATEGORY_CHOICES,
         'recent_posts': recent_posts,
+        'decades': decades,
     }
     return render(request, 'webapp/post_search.html', context)
+
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)

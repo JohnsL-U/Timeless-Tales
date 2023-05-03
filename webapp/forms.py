@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Post, Comment, UserProfile
+from django.forms import DateInput
 
 
 class LoginForm(AuthenticationForm):
@@ -31,9 +32,9 @@ class SignUpForm(UserCreationForm):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'description', 'image', 'category', 'location']
+        fields = ['title', 'description', 'image', 'location']
         widgets = {
-            'category': forms.CheckboxSelectMultiple(),
+            'published_date': DateInput(attrs={'type': 'date'})
         }
 
 class ContactForm(forms.Form):
