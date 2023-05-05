@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+<div class="search-page">
+    <div class="nav-bar">
+        <div class="left-buttons">
+            <form method="get" action="{% url 'webapp:post_search' %}">
+                <div class="dropdown">
+                    <button class="dropdown-btn">Categories</button>
+                    <div class="dropdown-content">
+                      {% for category in categories %}
+                        <label>
+                          <input type="checkbox" name="category" value="{{ category.0 }}" {% if category.0 in chosen_categories %}checked{% endif %}>
+                          {{ category.1 }}
+                        </label>
+                      {% endfor %}
+                      <button type="submit">Submit</button>
+                    </div>
+                  </div>                  
+            </form>
+            <a href="{% url 'webapp:home' %}">My Posts</a>
+        </div>
+        <div class="search-bar">
+            <form method="get" action="{% url 'webapp:post_search' %}">
+                <select name="season">
+                    <option value="">Select Season</option>
+                    <option value="winter">Winter</option>
+                    <option value="spring">Spring</option>
+                    <option value="summer">Summer</option>
+                    <option value="autumn">Autumn</option>
+                </select>
+                <select name="decade">
+                    <option value="">Select Decade</option>
+                    {% for decade in decades %}
+                        <option value="{{ decade }}">{{ decade }}s</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="search" class="search-input" placeholder="Search by words or years..." onkeypress="if(event.keyCode==13) this.form.submit();">                
+                <i class="fas fa-search"></i>
+            </form>
+        </div>
+    </div>
+    <div class="hero-section">
+        <h2>Explore Living History</h2>
+        <p>Immerse yourself in the personal stories that make history come alive</p>
+    </div>
+    <div class="post-search-create-post-button">
+        <button onclick="location.href='{% url 'webapp:home' %}';">Create a Post</button>
+    </div>
+    <div class="featured-stories">
+        {% for post in posts %}
+            <div class="story">
+                <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                <div class="story-content">
+                    <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
+                    <p>{{ post.description|truncatewords:10 }}</p>
+                </div>
+                <div class="story-icons">
+                    <span><i class="fas fa-thumbs-up"></i> Likes: {{ post.like_count }}</span> 
+                    <span><i class="fas fa-comment"></i> Comments: {{ post.comment_count }}</span>
+                </div>
+                <div class="following-status">
+                    <!-- Add following status logic here -->
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="new-posts">
+        <h2>Recent Posts</h2>
+        <div class="recent-posts-container">
+        {% for post in recent_posts|slice:":2" %}
+            <div class="new-post">
+                <div class="user-info">
+                    <img src="{{ post.user.profile.profile_pic.url }}" alt="{{ post.user.username }} profile picture">
+                    <div class="user-text">
+                        <p>{{ post.user.username }}</p>
+                        <p>{{ post.published_date|date:"F j, Y" }}</p>
+                    </div>
+                 </div>
+             <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title }}</a></h3>
+            <p>{{ post.description|truncatewords:20 }}</p>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.querySelector('.dropdown-btn').addEventListener('click', function() {
+      var content = document.querySelector('.dropdown-content');
+      content.style.display = content.style.display === 'block' ? 'none' : 'block';
+    });
+  </script>
+{% endblock %}
