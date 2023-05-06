@@ -5,6 +5,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Post, Comment, UserProfile
 from django.forms import DateInput
+from django_quill.forms import QuillFormField
 
 
 class LoginForm(AuthenticationForm):
@@ -30,13 +31,13 @@ class SignUpForm(UserCreationForm):
         return password1
     
 class PostForm(forms.ModelForm):
+    description = QuillFormField()
+    created_date = forms.DateField(widget=DateInput(attrs={'type': 'date'}))
     class Meta:
         model = Post
-        fields = ['title', 'description', 'image', 'location']
-        widgets = {
-            'published_date': DateInput(attrs={'type': 'date'})
-        }
+        fields = ['title', 'description', 'location', 'category', 'created_date']
 
+    
 class ContactForm(forms.Form):
     name = forms.CharField(label='Name', max_length=100, required=True)
     email = forms.EmailField(label='Email', required=True)

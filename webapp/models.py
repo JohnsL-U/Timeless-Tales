@@ -4,14 +4,18 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django_quill.fields import QuillField
+
+
+
+
 
 class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
-    description = models.TextField()
-    image = models.ImageField(upload_to='images/', null=True, blank=True)
-    created_date = models.DateField(default=timezone.now)
-    published_date = models.DateField(blank=True, null=True)
+    description = QuillField()
+    created_date = models.DateField(blank=True, null=True)
+    published_date = models.DateField(default=timezone.now)
     location = models.CharField(max_length=200, blank=True)
     likes_count = models.PositiveIntegerField(default=0)
     CATEGORY_CHOICES = (
@@ -74,4 +78,4 @@ class UserProfile(models.Model):
     def create_UserProfile(sender, instance, created, **kwargs):
         if created:
             UserProfile.objects.create(user=instance)
-        
+         
