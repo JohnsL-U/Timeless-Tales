@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+    <div class="introduction">
         <div class="catchphrase">
             <h2>Journey Through Time...Immerse Yourself in the Charm of Living History</h2>
         </div>
@@ -21,21 +22,22 @@
                 <h3>Interact</h3>
                 <p>Don't be shy, like and comment on stories. Highlight your favorites on your profile.</p>
             </div>
-        </div>        
-        <div class="form-container">
-            <div class="signup-form">
-            <form method="post" action="{% url 'webapp:welcome' %}">
-                <h1>Get Started for Free</h1>
-                <h2>Sign Up by completing the form below</h2>
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit">Sign up</button>
-                <h3>*By clicking sign up, you are agreeing the terms of use.</h3>
-            </form>
-            </div>
-            <div class="welcome-image">
-                <img src="{% static 'images/Welcome.png' %}" alt="Welcome Picture">
-            </div>      
         </div>
+    </div>        
+    <div class="form-container">
+        <div class="signup-form">
+        <form method="post" action="{% url 'webapp:welcome' %}">
+            <h1>Get Started for Free</h1>
+            <h2>Sign Up by completing the form below</h2>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Sign up</button>
+            <h3>*By clicking sign up, you are agreeing the terms of use.</h3>
+        </form>
+        </div>
+        <div class="welcome-image">
+            <img src="{% static 'images/Welcome.png' %}" alt="Welcome Picture">
+        </div>      
+    </div>
 {% endblock %}
 

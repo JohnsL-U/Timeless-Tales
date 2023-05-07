@@ -19,23 +19,23 @@
     <div class="contact-form">
       <form method="post" action="{% url 'webapp:contact' %}">
           {% csrf_token %}
-          <div class="contact-form-row">
-              <div class="contact-form-group">
+          <div class="contact-form-group">
+              <div class="contact-form-name">
                   {{ form.name.label_tag }}
                   {{ form.name }}
               </div>
-              <div class="contact-form-group">
+              <div class="contact-form-email">
                 {{ form.email.label_tag }}
                 {{ form.email }}
             </div>
           </div>
-          <div class="contact-form-group">
+          <div class="contact-form-message-box">
               {{ form.message.label_tag }}
               {{ form.message }}
           </div>
           <button type="submit">Submit</button>
       </form>
-  </div>
+    </div>
   </div>
 </div>
   
