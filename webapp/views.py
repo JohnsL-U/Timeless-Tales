@@ -13,9 +13,8 @@ from django.db.models import Q
 from .forms import SignUpForm, PostForm, ContactForm, CommentForm, LoginForm, EditProfileForm
 from .models import Post, Comment, Like, Notification, UserProfile
 from django.http import HttpResponseNotFound
-
-
-
+from datetime import datetime
+from django.core.paginator import Paginator
 
 
 
@@ -56,16 +55,17 @@ def password_change(request):
 #Story Posts
 @login_required
 def home(request):
-    user_posts = Post.objects.filter(user=request.user)
+    most_liked_posts = Post.objects.all().order_by('-likes_count')[:5]
     followed_users = request.user.profile.following.all()
     followed_posts = Post.objects.filter(user__in=followed_users)
     chosen_categories = request.GET.getlist('category')
-    current_user = request.user
+    current_user= request.user
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             new_post = form.save(commit=False)
             new_post.user = request.user
+            new_post.published_date = timezone.now() 
             new_post.save()
             form.save_m2m() 
             messages.success(request, 'Post created successfully!')
@@ -73,10 +73,10 @@ def home(request):
     else:
         form = PostForm()
     context = {
-        'posts': user_posts, 
+        'most_liked_posts': most_liked_posts,
+        'current_user': current_user, 
         'form': form, 
         'followed_posts': followed_posts, 
-        'current_user': request.user,
         'chosen_categories': chosen_categories,
         'categories': Post.CATEGORY_CHOICES,
     }
@@ -90,6 +90,7 @@ def post_search(request):
     chosen_categories = request.GET.getlist('category')
     search_query = request.GET.get('search')
     search_season = request.GET.get('season')
+    search_date = request.GET.get('date')
     decades = [decade for decade in range(1900, 2030, 10)]
 
     posts = Post.objects.all()
@@ -114,6 +115,15 @@ def post_search(request):
         posts = posts.filter(Q(category__in=chosen_categories)).order_by('created_date')
     else:
         posts = posts.order_by('created_date')
+    
+    if search_date:
+        search_date = datetime.strptime(search_date, '%Y-%m-%d').date()
+        posts = posts.filter(created_date__date=search_date)
+    
+    posts = posts.order_by('created_date')
+    paginator = Paginator(posts, 4)
+    page = request.GET.get('page')
+    posts = paginator.get_page(page)
 
     recent_posts = Post.objects.filter(
         created_date__lte=timezone.now()
@@ -127,7 +137,6 @@ def post_search(request):
         'decades': decades,
     }
     return render(request, 'webapp/post_search.html', context)
-
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
@@ -207,7 +216,7 @@ def user_profile(request, username=None):
             return HttpResponseNotFound("User not found")
     else:
         user = current_user
-    my_posts = Post.objects.filter(user=current_user)
+    posts = Post.objects.filter(user=current_user)
     notifications = Notification.objects.filter(user=current_user)
     comments = Comment.objects.filter(user=request.user).order_by('-created_date')
 
@@ -227,7 +236,7 @@ def user_profile(request, username=None):
     context = {
         'current_user': current_user,
         'user': user,
-        'my_posts': my_posts,
+        'posts': posts,
         'notifications': notifications,
         'comments': comments,
         'messages': messages.get_messages(request),
