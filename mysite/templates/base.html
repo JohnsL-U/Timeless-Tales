@@ -21,28 +21,27 @@
                 </a>
             </div>            
             <div class="icon-container">
-                <a href="/notifications" class="icon-link"><i class="fas fa-bell"></i></a>
-                <div class="user-profile-dropdown">
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'webapp:user_profile' user.username %}" class="icon-link"><i class="fas fa-user-circle"></i></a>
-                        <form method="post" action="{% url 'webapp:logout' %}" class="logout-form">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'webapp:user_profile_own' %}" class="icon-link"><i class="fas fa-user-circle"></i></a>
+                    <button onclick="toggleLoginForm();" class="logout-button" style="display: none;">Log In</button>
+                    <form method="post" action="{% url 'webapp:logout' %}" class="logout-form">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-button">Log Out</button>
+                    </form>
+                {% else %}
+                    <a href="#" class="icon-link" onclick="toggleLoginForm();"><i class="fas fa-user-circle"></i></a>
+                    <button onclick="toggleLoginForm();" class="logout-button">Log In</button>
+                    <div class="login-form-container" style="display: none;">
+                        <form method="post" action="{% url 'webapp:welcome' %}">
                             {% csrf_token %}
-                            <button type="submit" class="logout-button">Log Out</button>
+                            {{ login_form.username.label_tag }} {{ login_form.username }}
+                            {{ login_form.password.label_tag }} {{ login_form.password }}
+                            <button type="submit" name="login">Log in</button>
+                            <a href="{% url 'webapp:password_reset' %}" class="forgot-password">Forgot my password</a>
                         </form>
-                    {% else %}
-                        <a href="#" class="icon-link" onclick="toggleLoginForm();"><i class="fas fa-user-circle"></i></a>
-                        <div class="login-form-container" style="display: none;">
-                            <form method="post" action="{% url 'webapp:login' %}">
-                                {% csrf_token %}
-                                {{ login_form.username.label_tag }} {{ login_form.username }}
-                                {{ login_form.password.label_tag }} {{ login_form.password }}
-                                <button type="submit">Log in</button>
-                                <a href="{% url 'webapp:password_reset' %}" class="forgot-password">Forgot my password</a>
-                            </form>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>                      
+                    </div>
+                {% endif %}
+            </div>            
         </header>
         <nav>
             <ul>
