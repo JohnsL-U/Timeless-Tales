@@ -6,36 +6,25 @@
     <h2>Contact</h2>
     <p>Whether you have a technical issue, a content suggestion, or just want to share your thoughts on our website, we're here to listen. Thank you for your interest in Timeless Tales, and we look forward to hearing from you!</p>
   </div>
-  <div class="contact-details">
-    <div class="contact-info">
-      <h3>Contact Details</h3>
-      <p>
-        Address<br>
-        City, State, Zip<br>
-        Phone: (123) 456-7890<br>
-        Email: info@example.com
-      </p>
-    </div>
-    <div class="contact-form">
-      <form method="post" action="{% url 'webapp:contact' %}">
-          {% csrf_token %}
-          <div class="contact-form-group">
-              <div class="contact-form-name">
-                  {{ form.name.label_tag }}
-                  {{ form.name }}
-              </div>
-              <div class="contact-form-email">
-                {{ form.email.label_tag }}
-                {{ form.email }}
+  <div class="contact-form">
+    <form method="post" action="{% url 'webapp:contact' %}">
+        {% csrf_token %}
+        <div class="contact-form-group">
+            <div class="contact-form-name">
+                {{ form.name.label_tag }}
+                {{ form.name }}
             </div>
-          </div>
-          <div class="contact-form-message-box">
-              {{ form.message.label_tag }}
-              {{ form.message }}
-          </div>
-          <button type="submit">Submit</button>
-      </form>
-    </div>
+            <div class="contact-form-email">
+              {{ form.email.label_tag }}
+              {{ form.email }}
+            </div>
+        </div>
+        <div class="contact-form-message-box">
+            {{ form.message.label_tag }}
+            {{ form.message }}
+        </div>
+        <button type="submit">Submit</button>
+    </form>
   </div>
 </div>
   
