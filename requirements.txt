@@ -1,2 +1,6 @@
 Django~=3.2.10
 django.contrib.gis
+virtualenv
+django-quill-editor
+beautifulsoup4  
+bleach  
