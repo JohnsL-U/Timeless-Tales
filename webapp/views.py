@@ -4,37 +4,46 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib import messages
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .forms import SignUpForm, PostForm, ContactForm, CommentForm, LoginForm, EditProfileForm
-from .models import Post, Comment, Like, Notification, UserProfile
+from .models import Post, Comment, Like, Notification, User
 from django.http import HttpResponseNotFound
 from datetime import datetime
 from django.core.paginator import Paginator
+from django.contrib.auth import authenticate
 
-
-
-#Welcome Page!
 def welcome(request):
-    #Sign Up
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('webapp:user_profile')
-    else:
-        form = SignUpForm()
+    form = SignUpForm()
     login_form = LoginForm()
+    # Sign Up
+    if request.method == 'POST':
+        if 'signup' in request.POST:
+            form = SignUpForm(request.POST)
+            if form.is_valid():
+                user = form.save()
+                login(request, user)
+                return redirect('webapp:user_profile_own')
+        elif 'login' in request.POST:
+            login_form = LoginForm(data=request.POST)
+            if login_form.is_valid():
+                username = request.POST['username']
+                password = request.POST['password']
+                user = authenticate(request, username=username, password=password)
+                if user is not None:
+                    login(request, user)
+                    return redirect('webapp:user_profile_own')
+        else:
+            messages.error(request, 'Invalid login or password.')
+
     context = {
         'form': form,
         'login_form': login_form
     }
-    
+
     return render(request, 'webapp/welcome.html', context)
 
 #Password Change
@@ -45,10 +54,15 @@ def password_change(request):
             user = form.save()
             update_session_auth_hash(request, user)
             messages.success(request, 'Your password was successfully updated!')
-            return redirect('webapp:user_profile')
+            return redirect('webapp:user_profile_own')
+        else:
+            for field in form.errors:
+                for error in form.errors[field]:
+                    messages.error(request, f"{field.capitalize()}: {error}")
+            return redirect('webapp:user_profile_own')
     else:
-        messages.error(request, 'Please correct the error below.')
-    return redirect('webapp:user_profile')
+        form = PasswordChangeForm(request.user)
+        return redirect('webapp:user_profile_own')
     
 
 
@@ -82,8 +96,6 @@ def home(request):
     }
   
     return render(request, 'webapp/home.html', context)
-
-
 
 #Search Page
 def post_search(request):
@@ -209,6 +221,8 @@ def like_post(request, post_id):
 @login_required
 def user_profile(request, username=None):
     current_user = request.user
+    if not current_user.is_authenticated:
+        return redirect('webapp:home')
     if username:
         try:
             user = User.objects.get(username=username)
@@ -216,9 +230,12 @@ def user_profile(request, username=None):
             return HttpResponseNotFound("User not found")
     else:
         user = current_user
-    posts = Post.objects.filter(user=current_user)
+    
+    show_my_posts = user == current_user
+    posts = Post.objects.filter(user=user)
     notifications = Notification.objects.filter(user=current_user)
     comments = Comment.objects.filter(user=request.user).order_by('-created_date')
+
 
     if request.method == 'POST':
         form = EditProfileForm(request.POST, request.FILES, instance=current_user.profile)
@@ -226,7 +243,7 @@ def user_profile(request, username=None):
             print("Form is valid")
             form.save()
             messages.success(request, 'Profile updated successfully!')
-            return redirect('webapp:user_profile')
+            return redirect('webapp:user_profile_own')
         else:
             print("Form is not valid")
             print(form.errors)
@@ -240,7 +257,8 @@ def user_profile(request, username=None):
         'notifications': notifications,
         'comments': comments,
         'messages': messages.get_messages(request),
-        'form': form
+        'form': form,
+        'show_my_posts': show_my_posts
     }
     return render(request, 'webapp/user_profile.html', context)
 
@@ -248,13 +266,13 @@ def user_profile(request, username=None):
 def follow(request, user_id):
     user_to_follow = User.objects.get(pk=user_id)
     request.user.profile.following.add(user_to_follow)
-    return redirect('webapp:user_profile')
+    return redirect('webapp:user_profile_other', username=user_to_follow.username)
 
 @login_required
 def unfollow(request, user_id):
     user_to_unfollow = User.objects.get(pk=user_id)
     request.user.profile.following.remove(user_to_unfollow)
-    return redirect('webapp:user_profile')
+    return redirect('webapp:user_profile_other', username=user_to_unfollow.username)
 
 #Contact Page
 def contact(request):
