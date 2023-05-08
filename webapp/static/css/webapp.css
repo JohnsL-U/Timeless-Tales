@@ -76,6 +76,11 @@ nav ul li a {
   gap: 12px; 
 }
 
+.icon-container i.fas.fa-user-circle {
+  margin-top: 10px;
+  transform: scale(1.5); 
+}
+
 
 button {
   background-color: #2A7C6F;
