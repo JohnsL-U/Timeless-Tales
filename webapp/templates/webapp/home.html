@@ -1,91 +1,74 @@
 {% extends 'base.html' %}
 
 {% load static %}
+{% load custom_filters %}
 
 {% block extra_head %}
-<!-- Include jQuery if not already included -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<!-- Include the PlacesField widget's static files -->
-<link rel="stylesheet" href="{% static 'places/css/places.css' %}">
-<script src="{% static 'places/js/places.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>         
 {% endblock %}
 
 {% block content %}
 <div class="home-page">
-    <!-- User header section -->
-    <div class="user-header" {% if user.profile.background_pic %}style="background-image: url('{{ user.profile.background_pic.url }}');"{% else %}style="background-image: url('{% static 'images/default_background_pic.jpg' %}');"{% endif %}>
-        <div class="profile-info">
-            <div class="profile-pic-container">
-                {% if user.profile.profile_pic %}
-                    <img src="{{ user.profile.profile_pic.url }}" alt="Profile Picture" class="profile-pic">
-                {% else %}
-                    <img src="{% static 'images/default_profile_pic.png' %}" alt="Default Profile Picture" class="profile-pic">
-                {% endif %}
-            </div>
-            <div class="profile-details">
-                <div class="profile-name">
-                    <h2>{{ current_user.username }}</h2>
-                </div>
-                <div class="profile-followers-following">
-                    <p>Followers: {{ current_user.profile.followers.count }}</p>
-                    <p>Following: {{ current_user.profile.following.count }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
     <!-- Profile bar -->
     <div class="profile-bar">
         <a href="{% url 'webapp:post_search' %}" onclick="togglePosts();">Posts</a>
-        <a href="{% url 'webapp:user_profile' %}" onclick="toggleProfile();">Profile</a>
+        <a href="{% url 'webapp:user_profile_own' %}" onclick="toggleProfile();">Profile</a>
+    </div>
+    <!-- User header section -->
+    <div class="home-header">
+        <h2>Share Your World </h2>
+        <p>Unleash your creativity and connect with a vibrant community of like-minded individuals</p>
     </div>
     <div class="post-list">
+        <h2>Posts from Followed</h2>
         <div class="followed-posts">
-            <h2>Posts from Followed</h2>
-            <ul>
-                {% for post in followed_posts %}
-                    <li>
-                        <a href="{% url 'webapp:post_detail' post.id %}">{{ post.title }}</a>
-                        <p>{{ post.description|truncatewords:20 }}</p>
-                    </li>
-                {% empty %}
-                    <li>You are not following any users or they have not created any posts yet.</li>
-                {% endfor %}
-            </ul>
+            {% for post in followed_posts %}
+                {% with post.description.html|safe|extract_first_image as image_src %}
+                    {% if image_src %}
+                        <img src="{{ image_src }}" alt="{{ post.title }} first image">
+                    {% endif %}
+                {% endwith %}
+                <div class="followed-posts-content">
+                    <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
+                    <p>{{ post.description.html|safe | truncatewords:10}}</p>
+                </div>
+                <div class="followed-posts-icons">
+                    <span><i class="fas fa-thumbs-up"></i> Likes: {{ post.like_count }}</span> 
+                    <span><i class="fas fa-comment"></i> Comments: {{ post.comment_count }}</span>
+                </div>
+            {% empty %}
+                <p>You are not following any users or they have not created any posts yet.</p>
+            {% endfor %}
         </div>
-        <div class="my-posts">
-            <h2>My Posts</h2>
-            <ul>
-                {% for post in posts %}
-                    <li>
-                        <a href="{% url 'webapp:post_detail' post.id %}">{{ post.title }}</a>
-                        <p>{{ post.description|truncatewords:20 }}</p>
-                    </li>
-                {% empty %}
-                    <li>You have not created any posts yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
+        <h2>Most Popular Posts</h2>
+            {% for post in most_liked_posts %}
+                <div class="most-liked-posts">
+                    {% with post.description.html|safe|extract_first_image as image_src %}
+                        {% if image_src %}
+                            <img src="{{ image_src }}" alt="{{ post.title }} first image">
+                        {% endif %}
+                    {% endwith %}
+                    <div class="user-posts-content">
+                        <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
+                        <p>{{ post.description.html|safe | truncatewords:10}}</p>
+                    </div>
+                    <div class="user-posts-icons">
+                        <i class="fas fa-thumbs-up"></i> <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
+                        <i class="fas fa-comment"></i> <strong>Comments:</strong> {{ post.comment_count }}&nbsp;
+                    </div>
+                </div>
+            {% empty %}
+                <p>There are no posts yet.</p>
+            {% endfor %}   
+        <h2>Create a new post</h2>
     </div>
     <div class="create-post">
-        <h2>Create a new post:</h2>
         <form method="post" action="{% url 'webapp:home' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form.as_p }}
-            <div class="dropdown">
-                <button class="dropdown-btn">Categories</button>
-                <div class="dropdown-content">
-                  {% for category in categories %}
-                    <label>
-                      <input type="checkbox" name="category" value="{{ category.0 }}" {% if category.0 in chosen_categories %}checked{% endif %}>
-                      {{ category.1 }}
-                    </label>
-                  {% endfor %}
-                  <button type="submit">Submit</button>
-                </div>
-              </div>           
+            {{ form.media }} 
+            {{ form.as_p }}   
             <button type="submit">Publish Your Post</button>
-        </form>       
+        </form>
     </div>
 </div>
 {% endblock %}
@@ -93,7 +76,6 @@
 {% block extra_js %}
 <script>
 function hideAllSections() {
-    document.querySelector('.user_profile').style.display = 'none';
     document.querySelector('.posts-list').style.display = 'none';
 }
 
@@ -103,9 +85,6 @@ function toggleSection(sectionClass) {
     section.style.display = 'block';
 }
 
-function toggleProfile() {
-    toggleSection('.user_profile');
-}
 
 function togglePosts() {
     toggleSection('.posts-list');
