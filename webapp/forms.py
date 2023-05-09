@@ -33,10 +33,14 @@ class SignUpForm(UserCreationForm):
 class PostForm(forms.ModelForm):
     description = QuillFormField()
     created_date = forms.DateField(widget=DateInput(attrs={'type': 'date'}))
+    latitude = forms.DecimalField(widget=forms.HiddenInput(), required=True)
+    longitude = forms.DecimalField(widget=forms.HiddenInput(), required=True) 
     class Meta:
         model = Post
         fields = ['title', 'description', 'location', 'category', 'created_date']
-
+        widgets = {'location': forms.TextInput(attrs={'id': 'location'})
+                }
+    
     
 class ContactForm(forms.Form):
     name = forms.CharField(label='Name', max_length=100, required=True)
