@@ -7,9 +7,6 @@ from django.dispatch import receiver
 from django_quill.fields import QuillField
 
 
-
-
-
 class Post(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
@@ -17,6 +14,8 @@ class Post(models.Model):
     created_date = models.DateField(blank=True, null=True)
     published_date = models.DateField(default=timezone.now)
     location = models.CharField(max_length=200, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     likes_count = models.PositiveIntegerField(default=0)
     CATEGORY_CHOICES = (
     ('military', 'Military'),
@@ -32,13 +31,14 @@ class Post(models.Model):
 )
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, null=True, blank=True)
     
-
     def publish(self):
         self.published_date = timezone.now()
         self.save()
 
     def __str__(self):
         return self.title
+    
+    
     
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
