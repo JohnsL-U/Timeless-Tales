@@ -4,14 +4,14 @@
 {% load custom_filters %}
 
 {% block extra_head %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>         
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>  
 {% endblock %}
 
 {% block content %}
 <div class="home-page">
     <!-- Profile bar -->
     <div class="profile-bar">
-        <a href="{% url 'webapp:post_search' %}" onclick="togglePosts();">Posts</a>
+        <a href="{% url 'webapp:create_a_post' %}" onclick="togglePosts();">New Post</a>
         <a href="{% url 'webapp:user_profile_own' %}" onclick="toggleProfile();">Profile</a>
     </div>
     <!-- User header section -->
@@ -21,8 +21,8 @@
     </div>
     <div class="post-list">
         <h2>Posts from Followed</h2>
-        <div class="followed-posts">
-            {% for post in followed_posts %}
+        {% for post in followed_posts %}
+            <div class="followed-posts">
                 {% with post.description.html|safe|extract_first_image as image_src %}
                     {% if image_src %}
                         <img src="{{ image_src }}" alt="{{ post.title }} first image">
@@ -33,42 +33,33 @@
                     <p>{{ post.description.html|safe | truncatewords:10}}</p>
                 </div>
                 <div class="followed-posts-icons">
-                    <span><i class="fas fa-thumbs-up"></i> Likes: {{ post.like_count }}</span> 
-                    <span><i class="fas fa-comment"></i> Comments: {{ post.comment_count }}</span>
+                    <i class="fas fa-thumbs-up"></i> <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
+                    <i class="fas fa-comment"></i> <strong>Comments:</strong> {{ post.comments.count }}&nbsp;
                 </div>
-            {% empty %}
-                <p>You are not following any users or they have not created any posts yet.</p>
-            {% endfor %}
-        </div>
+            </div>
+        {% empty %}
+            <p>You are not following any users or they have not created any posts yet.</p>
+        {% endfor %}
         <h2>Most Popular Posts</h2>
-            {% for post in most_liked_posts %}
-                <div class="most-liked-posts">
-                    {% with post.description.html|safe|extract_first_image as image_src %}
-                        {% if image_src %}
-                            <img src="{{ image_src }}" alt="{{ post.title }} first image">
-                        {% endif %}
-                    {% endwith %}
-                    <div class="user-posts-content">
-                        <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
-                        <p>{{ post.description.html|safe | truncatewords:10}}</p>
-                    </div>
-                    <div class="user-posts-icons">
-                        <i class="fas fa-thumbs-up"></i> <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
-                        <i class="fas fa-comment"></i> <strong>Comments:</strong> {{ post.comment_count }}&nbsp;
-                    </div>
+        {% for post in most_liked_posts %}
+            <div class="most-liked-posts">
+                {% with post.description.html|safe|extract_first_image as image_src %}
+                    {% if image_src %}
+                        <img src="{{ image_src }}" alt="{{ post.title }} first image">
+                    {% endif %}
+                {% endwith %}
+                <div class="user-posts-content">
+                    <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
+                    <p>{{ post.description.html|safe | truncatewords:10}}</p>
                 </div>
-            {% empty %}
-                <p>There are no posts yet.</p>
-            {% endfor %}   
-        <h2>Create a new post</h2>
-    </div>
-    <div class="create-post">
-        <form method="post" action="{% url 'webapp:home' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.media }} 
-            {{ form.as_p }}   
-            <button type="submit">Publish Your Post</button>
-        </form>
+                <div class="user-posts-icons">
+                    <i class="fas fa-thumbs-up"></i> <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
+                    <i class="fas fa-comment"></i> <strong>Comments:</strong> {{ post.comments.count }}&nbsp;
+                </div>
+            </div>
+        {% empty %}
+            <p>There are no posts yet.</p>
+        {% endfor %}   
     </div>
 </div>
 {% endblock %}
@@ -90,9 +81,5 @@ function togglePosts() {
     toggleSection('.posts-list');
 }
 
-document.querySelector('.dropdown-btn').addEventListener('click', function() {
-      var content = document.querySelector('.dropdown-content');
-      content.style.display = content.style.display === 'block' ? 'none' : 'block';
-    });
 </script>
 {% endblock %}
