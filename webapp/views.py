@@ -15,6 +15,11 @@ from django.http import HttpResponseNotFound
 from datetime import datetime
 from django.core.paginator import Paginator
 from django.contrib.auth import authenticate
+from decouple import config
+from django.http import JsonResponse
+
+def get_api_key():
+    return JsonResponse({'google_api_key': config('API_KEY')})
 
 def welcome(request):
     form = SignUpForm()
@@ -64,6 +69,26 @@ def password_change(request):
         form = PasswordChangeForm(request.user)
         return redirect('webapp:user_profile_own')
     
+def create_a_post(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            new_post = form.save(commit=False)
+            new_post.user = request.user
+            new_post.published_date = timezone.now()
+            new_post.latitude = form.cleaned_data['latitude']
+            new_post.longitude = form.cleaned_data['longitude']
+            new_post.save()
+            form.save_m2m() 
+            messages.success(request, 'Post created successfully!')
+            return redirect('webapp:home')
+    else:
+        form = PostForm()
+    context = {
+        'form': form, 
+    }
+  
+    return render(request, 'webapp/create_a_post.html', context)
 
 
 #Story Posts
@@ -79,7 +104,9 @@ def home(request):
         if form.is_valid():
             new_post = form.save(commit=False)
             new_post.user = request.user
-            new_post.published_date = timezone.now() 
+            new_post.published_date = timezone.now()
+            new_post.latitude = form.cleaned_data['latitude']
+            new_post.longitude = form.cleaned_data['longitude']
             new_post.save()
             form.save_m2m() 
             messages.success(request, 'Post created successfully!')
@@ -92,7 +119,7 @@ def home(request):
         'form': form, 
         'followed_posts': followed_posts, 
         'chosen_categories': chosen_categories,
-        'categories': Post.CATEGORY_CHOICES,
+        'categories': Post.CATEGORY_CHOICES
     }
   
     return render(request, 'webapp/home.html', context)
@@ -102,13 +129,14 @@ def post_search(request):
     chosen_categories = request.GET.getlist('category')
     search_query = request.GET.get('search')
     search_season = request.GET.get('season')
-    search_date = request.GET.get('date')
+    search_date_range = request.GET.get('date_range')
+
     decades = [decade for decade in range(1900, 2030, 10)]
 
     posts = Post.objects.all()
 
     if search_query:
-        posts = posts.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query) | Q(created_date__year=search_query))
+        posts = posts.filter(Q(title__icontains=search_query) | Q(description__icontains=search_query) | Q(user__username__icontains=search_query) | Q(location__icontains=search_query))
         if search_query.isdigit():
             start_decade = int(search_query[:3] + "0")
             end_decade = int(search_query[:3] + "9")
@@ -128,9 +156,11 @@ def post_search(request):
     else:
         posts = posts.order_by('created_date')
     
-    if search_date:
-        search_date = datetime.strptime(search_date, '%Y-%m-%d').date()
-        posts = posts.filter(created_date__date=search_date)
+    if search_date_range:
+        start_date, end_date = search_date_range.split(' - ')
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        posts = posts.filter(created_date__date__range=(start_date, end_date))
     
     posts = posts.order_by('created_date')
     paginator = Paginator(posts, 4)
@@ -157,7 +187,8 @@ def post_detail(request, post_id):
     context = {
         'post': post,
         'comments': comments,
-        'form': form
+        'form': form,
+        'API_KEY': settings.GOOGLE_API_KEY
     }
     return render(request, 'webapp/post_detail.html', context)
 
@@ -175,7 +206,6 @@ def add_comment(request, post_id):
             comment.user = request.user
             comment.save()
 
-            # Create a notification for the post author
             notification = Notification(
                 user=post.user,
                 text=f"{request.user.username} commented on your post.",
@@ -201,12 +231,10 @@ def like_post(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     like, created = Like.objects.get_or_create(post=post, user=request.user)
     if not created:
-        # The user already liked this post, so this request is for unliking it
         like.delete()
         post.likes_count -= 1
     else:
         post.likes_count += 1
-        # Create a notification for the post author
         notification = Notification(
             user=post.user,
             text=f"{request.user.username} liked your post.",
@@ -221,6 +249,7 @@ def like_post(request, post_id):
 @login_required
 def user_profile(request, username=None):
     current_user = request.user
+
     if not current_user.is_authenticated:
         return redirect('webapp:home')
     if username:
