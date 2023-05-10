@@ -395,6 +395,7 @@ footer a:hover {
   margin-top: 0;
   margin-bottom: 20px;
   font-weight: bold;
+  text-align: left;
 }
 
 .create-post form {
@@ -430,7 +431,6 @@ footer a:hover {
   border-radius: 5px;
   border: 1px solid #ccc;
 }
-
 
 /* POST DETAIL PAGE */
 .post-detail {
@@ -673,6 +673,20 @@ footer a:hover {
   padding: 0 10px;
 }
 
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 5px;  
+  margin: 20px 0; 
+  margin-left: 100px;
+}
+
+.user-section img {
+  width: 40px;  
+  height: 40px;
+  border-radius: 50%; 
+}
+
 .next-page {
   text-align: center;
   margin: 20px 0;
@@ -685,16 +699,6 @@ footer a:hover {
   color: #fff;
   text-decoration: none;
   border-radius: 5px;
-}
-
-
-.recent-posts-container {
-  display: flex;
-  justify-content: space-between;
-  margin-left: 150px; 
-  margin-right: 150px;
-  max-width: 1800px; 
-  margin: 0 auto; 
 }
 
 .new-posts h2 {
@@ -720,32 +724,7 @@ footer a:hover {
   margin-right: 150px; 
 }
 
-
-.user-info {
-  display: flex;
-  align-items: left;
-  margin-top: 10px;
-}
-
-.user-info img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-.recent-post-title {
-  text-align: left;
-  margin-bottom: 5px; 
-}
-
-.recent-post-description {
-  text-align: left;
-  margin-top: 5px; 
-}
-
-
-.user-text p:last-child {
+.story-content p:last-child {
   font-size: 14px;
   color: #999999;
   margin-bottom: 0;
@@ -789,7 +768,6 @@ footer a:hover {
 .dropdown-btn:hover, .dropdown-btn:focus {
   background-color: transparent;
 }
-
 
 /* USER PROFILE PAGE */
 .profile-page{
