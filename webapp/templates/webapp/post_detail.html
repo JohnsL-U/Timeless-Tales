@@ -1,45 +1,76 @@
 {% extends 'base.html' %}
 
+{% load custom_filters %}
+
 {% block content %}
-    <h2>{{ post.title }}</h2>
-    {% if post.image %}
-        <img src="{{ post.image.url }}" alt="{{ post.title }} image">
-    {% endif %}
-    <p>Author: {{ post.user.username }}</p>
-    <p>Created at: {{ post.created_date }}</p>
-    <p>Published on: {{ post.published_date }}</p>
-    <p>{{ post.description }}</p>
-    <p>
-        <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
-        <form method="post" action="{% url 'webapp:like_post' post.id %}" style="display: inline;">
+<div class="post-detail">
+    <div class="post-header">
+        <div class="author-info">
+            <img src="{{ post.user.profile.profile_pic.url }}" alt="{{ post.user.username }} profile picture">
+            <a class="author-name" href="{% url 'webapp:user_profile_other' post.user.username %}">{{ post.user.username }}</a>
+            <p>Created at: {{ post.created_date }}</p>
+            <p>Published on: {{ post.published_date }}</p>
+        </div>
+        <div class="post-actions">
+            <p>
+                <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
+                <form method="post" action="{% url 'webapp:like_post' post.id %}" style="display: inline;" id="likeForm">
+                    {% csrf_token %}
+                    {% if request.user in post.likes.all %}
+                        <button type="submit" class="like-btn" data-liked="true">Unlike</button>
+                    {% else %}
+                        <button type="submit" class="like-btn" data-liked="false">Like</button>
+                    {% endif %}
+                </form>                
+            </p>
+        </div>
+    </div>
+    <div class="post-description">
+        <h2>{{ post.title }}</h2>
+        <p>{{ post.description.html|safe}}</p>
+        <p id="location-name">{{ post.location }}</p>
+        <div id="map" style="height: 400px; width: 100%;"></div>
+        <script>
+            function initMap() {
+                const lat = parseFloat('{{ post.latitude }}');
+                const lng = parseFloat('{{ post.longitude }}');
+                const locationName = ('{{ post.location }}');
+                const location = { lat: lat, lng: lng };
+                let map = new google.maps.Map(
+                    document.getElementById('map'), {zoom:12, center:location}
+                );
+                let marker = new google.maps.Marker({position: location, map: map})
+            }
+        </script>
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ API_KEY }}&callback=initMap"></script>
+    </div>
+    <div class="post-comments">
+        <h3>Comments:</h3>
+        <ul>
+            {% for comment in comments %}
+                <li>
+                    <strong>{{ comment.user.username }}</strong> - {{ comment.created_date }}<br>
+                    {{ comment.content }}
+                    {% if request.user == comment.user %}
+                        <div class="delete-comment-form">
+                            <form method="post" action="{% url 'webapp:delete_comment' comment.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit">Delete</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li>No comments yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="post-comment-form">
+        <form method="post" action="{% url 'webapp:add_comment' post.id %}">
             {% csrf_token %}
-            {% if request.user in post.likes.all %}
-                <button type="submit">Unlike</button>
-            {% else %}
-                <button type="submit">Like</button>
-            {% endif %}
+            {{ form.as_p }}
+            <button type="submit">Submit Comment</button>
         </form>
-    </p>
-    <h3>Comments:</h3>
-    <ul>
-        {% for comment in comments %}
-            <li>
-                <strong>{{ comment.user.username }}</strong> - {{ comment.created_date }}<br>
-                {{ comment.content }}
-                {% if request.user == comment.user %}
-                    <form method="post" action="{% url 'webapp:delete_comment' comment.id %}" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit">Delete</button>
-                    </form>
-                {% endif %}
-            </li>
-        {% empty %}
-            <li>No comments yet.</li>
-        {% endfor %}
-    </ul>
-    <form method="post" action="{% url 'webapp:add_comment' post.id %}">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit Comment</button>
-    </form>
+    </div>
+</div>
 {% endblock %}
