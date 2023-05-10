@@ -23,7 +23,7 @@
             </div>
             <div class="profile-details">
                 <div class="profile-name">
-                    <h2>{{ current_user.username }}</h2>
+                    <h2>{{ user.username }}</h2>
                 </div>
                 <div class="profile-followers-following">
                     <p>Followers: {{ current_user.profile.followers.count }}</p>
@@ -42,24 +42,42 @@
     <div class="profile-edit-joined">
         <div class="profile-joined">
             <h3>Profile</h3>
-            <p>Joined: {{ current_user.date_joined }}</p>
+            <p>Joined: {{ user.date_joined }}</p>
         </div>
-        <button class="edit-profile-btn" onclick="toggleEditProfileForm();toggleAboutSection();">Edit Profile</button>
+        {% if user.id == current_user.id %}
+            <!-- Edit Profile button -->
+            <button class="edit-profile-btn" onclick="toggleEditProfileForm();toggleAboutSection();">Edit Profile</button>
+        {% else %}
+            <!-- Follow button -->
+            {% if user in current_user.profile.following.all %}
+            <form method="post" action="{% url 'webapp:unfollow' user.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Unfollow</button>
+            </form>
+            {% else %}
+            <form method="post" action="{% url 'webapp:follow' user.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Follow</button>
+            </form>
+            {% endif %}
+        {% endif %}
     </div>
     <!-- My Posts list (hidden by default) -->
+    {% if show_my_posts %}
     <div class="my-posts-list" style="display:none;">
         <h3>My Posts</h3>
         <ul>
             {% for post in posts %}
                 <li>
                     <a href="{% url 'webapp:post_detail' post.id %}">{{ post.title }}</a>
-                    <p>{{ post.description|truncatewords:20 }}</p>
+                    <p>{{ post.description.html|safe | truncatewords:20}}</p>
                 </li>
             {% empty %}
                 <li>You have not created any posts yet.</li>
             {% endfor %}
         </ul>
     </div>
+    {% endif %}
     <!-- Notifications list (hidden by default) -->
     <div class="notifications-list" style="display:none;">
         <h3>Notifications</h3>
@@ -99,10 +117,10 @@
     <!-- About sections -->
     <div class="about" contentEditable="true" id="about-section">
         <h3>About</h3>
-        <p>{{ current_user.profile.about }}</p>
+        <p>{{ user.profile.about }}</p>
     </div>
     <!-- Edit profile form (hidden by default) -->
-    <form id="edit-profile-form" method="post" action="{% url 'webapp:user_profile' current_user.username %}" enctype="multipart/form-data" style="display:none;">
+    <form id="edit-profile-form" method="post" action="{% url 'webapp:user_profile_own' %}" enctype="multipart/form-data" style="display:none;">
         {% csrf_token %}
         <h3>Edit Profile</h3>
         <label for="{{ form.profile_pic.auto_id }}">Profile Picture:</label>
