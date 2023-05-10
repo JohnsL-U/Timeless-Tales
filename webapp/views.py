@@ -90,36 +90,17 @@ def create_a_post(request):
   
     return render(request, 'webapp/create_a_post.html', context)
 
-
 #Story Posts
 @login_required
 def home(request):
     most_liked_posts = Post.objects.all().order_by('-likes_count')[:5]
     followed_users = request.user.profile.following.all()
     followed_posts = Post.objects.filter(user__in=followed_users)
-    chosen_categories = request.GET.getlist('category')
     current_user= request.user
-    if request.method == 'POST':
-        form = PostForm(request.POST, request.FILES)
-        if form.is_valid():
-            new_post = form.save(commit=False)
-            new_post.user = request.user
-            new_post.published_date = timezone.now()
-            new_post.latitude = form.cleaned_data['latitude']
-            new_post.longitude = form.cleaned_data['longitude']
-            new_post.save()
-            form.save_m2m() 
-            messages.success(request, 'Post created successfully!')
-            return redirect('webapp:home')
-    else:
-        form = PostForm()
     context = {
         'most_liked_posts': most_liked_posts,
         'current_user': current_user, 
-        'form': form, 
         'followed_posts': followed_posts, 
-        'chosen_categories': chosen_categories,
-        'categories': Post.CATEGORY_CHOICES
     }
   
     return render(request, 'webapp/home.html', context)
