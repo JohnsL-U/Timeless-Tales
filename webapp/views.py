@@ -158,6 +158,7 @@ def post_search(request):
         'categories': Post.CATEGORY_CHOICES,
         'recent_posts': recent_posts,
         'decades': decades,
+        'API_KEY': settings.GOOGLE_API_KEY
     }
     return render(request, 'webapp/post_search.html', context)
 
