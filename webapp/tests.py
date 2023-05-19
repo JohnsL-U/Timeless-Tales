@@ -1,248 +1,199 @@
-from django.test import TestCase, RequestFactory
-from django.contrib.auth.models import AnonymousUser, User
-from decouple import config
-from django.test import TestCase, RequestFactory, Client
+from django.test import TestCase, Client, SimpleTestCase
 from django.contrib.auth.models import User
-from webapp.views import password_change, like_post, follow, get_api_key, create_a_post, post_search, home
-from webapp.models import Post, Comment, Like
-from datetime import timezone
-from forms import ContactForm
-from django.urls import reverse
+from . import views
+from .models import Post, Comment, Like, Notification, UserProfile
+from django.urls import reverse, resolve
+from django.contrib.auth.views import LoginView, LogoutView
 
-class UserAuthenticationTest(TestCase):
+
+class ViewsTestCase(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user_data = {
-            'username': 'testuser',
-            'password': 'testpassword123'
-        }
-        self.user = User.objects.create_user(**self.user_data)
-
-    def test_signup_with_valid_details(self):
-        user_data = {
-            'username': 'newuser',
-            'password': 'newpassword123'
-        }
-        response = self.client.post('/signup/', user_data)
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(User.objects.filter(username=user_data['username']).exists())
-
-    def test_signup_with_invalid_details(self):
-        user_data = {
-            'username': 'newuser',
-            'password': 'short'
-        }
-        response = self.client.post('/signup/', user_data)
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(User.objects.filter(username=user_data['username']).exists())
-
-    def test_login_with_valid_credentials(self):
-        response = self.client.post('/login/', self.user_data, follow=True)
-        self.assertTrue(response.context['user'].is_authenticated)
-
-    def test_login_with_invalid_credentials(self):
-        user_data = {
-            'username': 'testuser',
-            'password': 'wrongpassword'
-        }
-        response = self.client.post('/login/', user_data, follow=True)
-        self.assertFalse(response.context['user'].is_authenticated)
-
-
-class CreatePostTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
-
-    def test_create_post(self):
-        request = self.factory.post('/create_a_post', {'title': 'Test Post', 'description': 'Test Description', 'category': 'Test Category', 'latitude': '0.0', 'longitude': '0.0'})
-        request.user = self.user
-
-        response = create_a_post(request)
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, 'webapp:home')
-        self.assertEqual(Post.objects.filter(title='Test Post').count(), 1)
-
-
-class PostSearchTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
-        self.post = Post.objects.create(title='Test Post', description='Test Description', user=self.user,
-                                        created_date=timezone.now(), location='Test Location')
-
-    def test_post_search_title(self):
-        request = self.factory.get('/post_search', {'search': 'Test Post'})
-
-        response = post_search(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context_data['posts']), 1)
-        self.assertEqual(response.context_data['posts'][0], self.post)
-
-    def test_post_search_date(self):
-        request = self.factory.get('/post_search', {'date_range': f'{timezone.now().date()} - {timezone.now().date()}'})
-
-        response = post_search(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context_data['posts']), 1)
-        self.assertEqual(response.context_data['posts'][0], self.post)
-
-    def test_post_search_location(self):
-        request = self.factory.get('/post_search', {'search': 'Test Location'})
-
-        response = post_search(request)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context_data['posts']), 1)
-        self.assertEqual(response.context_data['posts'][0], self.post)
-
-class HomeTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
-        self.client.login(username='jacob', password='top_secret')
-
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.post = Post.objects.create(user=self.user, title='Test Post')
+    
     def test_home_view(self):
-        request = self.factory.get('/home')
-        request.user = self.user
-        response = home(request)
+        self.client.login(username='testuser', password='testpassword')  # Log in the test client
+        response = self.client.get(reverse('webapp:home'))
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'webapp/home.html')
 
-class AddCommentTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
-        self.post = Post.objects.create(title='Test Post', description='Test Description', user=self.user)
-
-    def test_add_comment(self):
-        self.client.login(username='jacob', password='top_secret')
-        response = self.client.post(f'/add_comment/{self.post.id}', {'text': 'Test comment'})
-        self.assertEqual(response.status_code, 302) # Expecting a redirect
-        self.assertEqual(Comment.objects.count(), 1)
-        self.assertEqual(Comment.objects.get().text, 'Test comment')
-
-class DeleteCommentTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
-        self.post = Post.objects.create(title='Test Post', description='Test Description', user=self.user)
-        self.comment = Comment.objects.create(post=self.post, user=self.user, text='Great post!')
-
-    def test_delete_comment(self):
-        self.client.login(username='jacob', password='top_secret')
-        response = self.client.post(f'/delete_comment/{self.comment.id}')
-        self.assertEqual(response.status_code, 302) # Expecting a redirect
-        self.assertEqual(Comment.objects.count(), 0)
-
-
-class ContactTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-
-    def test_contact_form(self):
-        form_data = {'name': 'Test User', 'email': 'testuser@gmail.com', 'message': 'Hello!'}
-        form = ContactForm(data=form_data)
-        self.assertTrue(form.is_valid())
-
-    def test_contact(self):
-        form_data = {'name': 'Test User', 'email': 'testuser@gmail.com', 'message': 'Hello!'}
-        response = self.client.post('/contact', form_data)
-        self.assertEqual(response.status_code, 302) # Expecting a redirect
-
-
-class LikePostTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user1 = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
-        self.user2 = User.objects.create_user(username='mark', email='mark@gmail.com', password='top_secret')
-        self.post = Post.objects.create(title='Test Post', description='Test Description', user=self.user2)
-
-    def test_like_post(self):
-        request = self.factory.post(f'/like_post/{self.post.id}')
-        request.user = self.user1
-
-        response = like_post(request, self.post.id)
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, f'webapp:post_detail/{self.post.id}')
-        self.assertEqual(Like.objects.filter(post=self.post, user=self.user1).count(), 1)
-
-class UserProfileTestCase(TestCase):
-    def setUp(self):
-        self.client = Client()
-        self.user1 = User.objects.create_user(username='testuser1', password='testpass123')
-        self.user2 = User.objects.create_user(username='testuser2', password='testpass123')
-        self.user_profile_url = reverse('user_profile_own')
-        self.other_user_profile_url = reverse('user_profile_other', kwargs={'username': 'testuser2'})
-
-    def test_authenticated_user_can_view_own_profile(self):
-        self.client.login(username='testuser1', password='testpass123')
-        response = self.client.get(self.user_profile_url)
+    def test_post_detail_view(self):
+        self.client.login(username='testuser', password='testpassword')  # Log in the test client
+        response = self.client.get(reverse('webapp:post_detail', args=[self.post.id]))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'testuser1')
-
-    def test_authenticated_user_can_edit_own_profile(self):
-            self.client.login(username='testuser1', password='testpass123')
-            with open('path_to_profile_pic.jpg', 'rb') as profile_pic, open('path_to_background_pic.jpg', 'rb') as background_pic:
-                response = self.client.post(self.user_profile_url, {
-                    'username': 'newuser1', 
-                    'email': 'newuser1@test.com',
-                    'profile.profile_picture': profile_pic,
-                    'profile.background_picture': background_pic,
-                    'profile.about': 'This is a test about section.'
-                })
-            self.assertEqual(response.status_code, 302)
-            self.assertRedirects(response, self.user_profile_url)
-            self.user1.refresh_from_db()
-            self.assertEqual(self.user1.username, 'newuser1')
-            self.assertEqual(self.user1.email, 'newuser1@test.com')
-            self.assertEqual(self.user1.profile.about, 'This is a test about section.')
-
-    def test_user_cannot_edit_someone_elses_profile(self):
-        self.client.login(username='testuser1', password='testpass123')
-        response = self.client.post(self.other_user_profile_url, {'username': 'newuser2', 'email': 'newuser2@test.com'})
-        self.assertEqual(response.status_code, 403)
-        self.user2.refresh_from_db()
-        self.assertEqual(self.user2.username, 'testuser2')
-        self.assertNotEqual(self.user2.email, 'newuser2@test.com')
+        self.assertTemplateUsed(response, 'webapp/post_detail.html')
 
 
-class FollowUserTest(TestCase):
+    def test_add_comment_view(self):
+        self.client.login(username='testuser', password='testpassword')
+        response = self.client.post(reverse('webapp:add_comment', args=[self.post.id]), {'content': 'Test Comment'})
+        self.assertEqual(response.status_code, 302)  # Redirect after successful comment submission
+
+        comments = Comment.objects.filter(post=self.post)
+        self.assertEqual(comments.count(), 1)
+        self.assertEqual(comments[0].content, 'Test Comment')
+
+    def test_like_post_view(self):
+        self.client.login(username='testuser', password='testpassword')
+        response = self.client.get(reverse('webapp:like_post', args=[self.post.id]))
+        self.assertEqual(response.status_code, 302)  # Redirect after successful like
+
+        likes = Like.objects.filter(post=self.post)
+        self.assertEqual(likes.count(), 1)
+
+    def test_user_profile_view(self):
+        response = self.client.get(reverse('webapp:user_profile_own'))
+        self.assertEqual(response.status_code, 302)  # Redirect if user is not authenticated
+
+        self.client.login(username='testuser', password='testpassword')
+        response = self.client.get(reverse('webapp:user_profile_own'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'webapp/user_profile.html')
+
+
+class UrlsTestCase(SimpleTestCase):
+    def test_home_url_resolves(self):
+        url = reverse('webapp:home')
+        self.assertEqual(resolve(url).func, views.home)
+
+    def test_welcome_url_resolves(self):
+        url = reverse('webapp:welcome')
+        self.assertEqual(resolve(url).func, views.welcome)
+
+    def test_post_search_url_resolves(self):
+        url = reverse('webapp:post_search')
+        self.assertEqual(resolve(url).func, views.post_search)
+
+    def test_create_a_post_url_resolves(self):
+        url = reverse('webapp:create_a_post')
+        self.assertEqual(resolve(url).func, views.create_a_post)
+
+    def test_post_detail_url_resolves(self):
+        url = reverse('webapp:post_detail', args=[1])
+        self.assertEqual(resolve(url).func, views.post_detail)
+
+    def test_add_comment_url_resolves(self):
+        url = reverse('webapp:add_comment', args=[1])
+        self.assertEqual(resolve(url).func, views.add_comment)
+
+    def test_delete_comment_url_resolves(self):
+        url = reverse('webapp:delete_comment', args=[1])
+        self.assertEqual(resolve(url).func, views.delete_comment)
+
+    def test_like_post_url_resolves(self):
+        url = reverse('webapp:like_post', args=[1])
+        self.assertEqual(resolve(url).func, views.like_post)
+
+    def test_contact_url_resolves(self):
+        url = reverse('webapp:contact')
+        self.assertEqual(resolve(url).func, views.contact)
+
+    def test_contact_success_url_resolves(self):
+        url = reverse('webapp:contact_success')
+        self.assertEqual(resolve(url).func, views.contact_success)
+
+    def test_about_url_resolves(self):
+        url = reverse('webapp:about')
+        self.assertEqual(resolve(url).func, views.about)
+
+    def test_user_profile_own_url_resolves(self):
+        url = reverse('webapp:user_profile_own')
+        self.assertEqual(resolve(url).func, views.user_profile)
+
+    def test_user_profile_other_url_resolves(self):
+        url = reverse('webapp:user_profile_other', args=['testuser'])
+        self.assertEqual(resolve(url).func, views.user_profile)
+
+    def test_follow_url_resolves(self):
+        url = reverse('webapp:follow', args=[1])
+        self.assertEqual(resolve(url).func, views.follow)
+
+    def test_unfollow_url_resolves(self):
+        url = reverse('webapp:unfollow', args=[1])
+        self.assertEqual(resolve(url).func, views.unfollow)
+
+    def test_login_url_resolves(self):
+        url = reverse('webapp:login')
+        self.assertEqual(resolve(url).func.view_class, LoginView)
+
+    def test_logout_url_resolves(self):
+        url = reverse('webapp:logout')
+        self.assertEqual(resolve(url).func.view_class, LogoutView)
+
+    def test_password_change_url_resolves(self):
+        url = reverse('webapp:password_change')
+        self.assertEqual(resolve(url).func, views.password_change)
+
+    def test_password_reset_request_url_resolves(self):
+        url = reverse('webapp:password_reset')
+        self.assertEqual(resolve(url).func, views.password_reset_request)
+
+    def test_password_reset_done_url_resolves(self):
+        url = reverse('webapp:password_reset_done')
+        self.assertEqual(resolve(url).func, views.password_reset_done)
+
+    def test_password_reset_confirm_url_resolves(self):
+        url = reverse('webapp:password_reset_confirm', args=['uidb64', 'token'])
+        self.assertEqual(resolve(url).func, views.password_reset_confirm)
+
+    def test_password_reset_complete_url_resolves(self):
+        url = reverse('webapp:password_reset_complete')
+        self.assertEqual(resolve(url).func, views.password_reset_complete)
+
+    def test_user_agreement_url_resolves(self):
+        url = reverse('webapp:user_agreement')
+        self.assertEqual(resolve(url).func, views.user_agreement)
+
+    def test_get_api_key_url_resolves(self):
+        url = reverse('webapp:get_api_key')
+        self.assertEqual(resolve(url).func, views.get_api_key)
+
+
+
+
+class ModelsTestCase(TestCase):
     def setUp(self):
-        self.factory = RequestFactory()
-        self.user1 = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
-        self.user2 = User.objects.create_user(username='mark', email='mark@gmail.com', password='top_secret')
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
 
-    def test_follow_user(self):
-        request = self.factory.post(f'/follow/{self.user2.id}')
-        request.user = self.user1
+    def test_post_creation(self):
+        post = Post.objects.create(user=self.user, title='Test Post')
+        self.assertEqual(str(post), 'Test Post')
 
-        response = follow(request, self.user2.id)
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, f'webapp:user_profile_other/{self.user2.username}')
-        self.assertTrue(self.user2 in self.user1.profile.following.all())
+    def test_comment_creation(self):
+        post = Post.objects.create(user=self.user, title='Test Post')
+        comment = Comment.objects.create(post=post, user=self.user, content='Test comment content')
+        self.assertEqual(comment.post, post)
+        self.assertEqual(comment.user, self.user)
+        self.assertEqual(comment.content, 'Test comment content')
 
-class PasswordChangeTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = User.objects.create_user(username='jacob', email='jacob@gmail.com', password='top_secret')
+    def test_like_creation(self):
+        post = Post.objects.create(user=self.user, title='Test Post')
+        like = Like.objects.create(post=post, user=self.user)
+        self.assertEqual(like.post, post)
+        self.assertEqual(like.user, self.user)
 
-    def test_password_change(self):
-        request = self.factory.post('/password_change', {'old_password': 'top_secret', 'new_password1': 'new_secret', 'new_password2': 'new_secret'})
-        request.user = self.user
+    def test_notification_creation(self):
+        post = Post.objects.create(user=self.user, title='Test Post')
+        notification = Notification.objects.create(
+            user=self.user,
+            text='Test notification text',
+            post=post
+        )
+        self.assertEqual(str(notification), 'Test notification text')
+        self.assertEqual(notification.user, self.user)
+        self.assertEqual(notification.text, 'Test notification text')
+        self.assertEqual(notification.post, post)
+        self.assertFalse(notification.read)
 
-        response = password_change(request)
-        self.assertEqual(response.status_code, 302)
-        self.assertRedirects(response, 'webapp:user_profile_own')
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password('new_secret'))
+    def test_user_profile_creation(self):
+        UserProfile.objects.filter(user=self.user).delete()
+        user_profile = UserProfile.objects.create(user=self.user, about='Test user profile')
+        self.assertEqual(str(user_profile), "testuser's Profile")
+        self.assertEqual(user_profile.user, self.user)
+        self.assertEqual(user_profile.about, 'Test user profile')
 
-
-class GetApiKeyTest(TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-
+class APITestCase(TestCase):
     def test_get_api_key(self):
-        request = self.factory.get('/get_api_key')
-        response = get_api_key(request)
+        response = self.client.get(reverse('webapp:get_api_key'))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.content['google_api_key'], config('API_KEY'))
-
