@@ -72,8 +72,9 @@ nav ul li a {
   right: 15px;
   font-size: 25px;
   display: flex;
-  flex-direction: row;
-  gap: 12px; 
+  flex-direction:row;
+  gap: 12px;
+  margin-right: 50px; 
 }
 
 .icon-container i.fas.fa-user-circle {
@@ -164,7 +165,7 @@ footer a:hover {
   outline: none;
   font-size: 16px;
   white-space: nowrap;
-  margin-right: 24px;
+  margin-right: 25px;
   border-radius: 5px;
 }
 
@@ -315,6 +316,12 @@ footer a:hover {
   margin-bottom: 0;
 }
 
+.followed-posts-content p:last-child {
+  font-size: 14px;
+  color: #999999;
+  margin-bottom: 0;
+}
+
   
 .followed-posts-icons {
   display: flex;
@@ -361,6 +368,12 @@ footer a:hover {
   margin-bottom: 0;
 }
 
+.user-posts-content p:last-child {
+  font-size: 14px;
+  color: #999999;
+  margin-bottom: 0;
+}
+
   
 .user-posts-icons {
   display: flex;
@@ -370,6 +383,7 @@ footer a:hover {
   padding: 0 10px;
 } 
 
+/* CREATE A POST PAGE */
 .create-post {
   display: flex;
   flex-direction: column;
@@ -432,6 +446,70 @@ footer a:hover {
   border: 1px solid #ccc;
 }
 
+
+/* EDIT POST PAGE */
+.edit-post {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid #2A7C6F;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  max-width: 1500px;
+  margin: 20px;
+  margin-left: 150px;
+  margin-right: 150px;
+  text-align: left;
+}
+
+.edit-post .ql-container {
+  height: 300px;
+  width: 100%; 
+}
+
+
+.edit-post h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-weight: bold;
+  text-align: left;
+}
+
+.edit-post form {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-post button[type="submit"] {
+  background-color: #2A7C6F;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.edit-post button[type="submit"]:hover {
+  background-color: #ffaa00;
+}
+
+.edit-post label {
+  margin-bottom: 5px;
+}
+
+.edit-post input[type="file"],
+.edit-post input[type="text"],
+.edit-post textarea {
+  margin-bottom: 10px;
+  width: 100%;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
 /* POST DETAIL PAGE */
 .post-detail {
   max-width: 1800px;
@@ -439,6 +517,13 @@ footer a:hover {
   font-size: 1rem;
   padding-left: 150px;
   padding-right: 150px;
+}
+.post-category {
+  margin-top: 0px;
+}
+
+.post-category .category{
+  color: #999999;
 }
 
 .post-header {
@@ -456,9 +541,10 @@ footer a:hover {
 }
 
 .author-info img {
-  width: 50px;
-  height: 50px;
+  width: 75px;
+  height: 75px;
   border-radius: 50%;
+  margin-bottom: 20px;
 }
 
 .author-name {
@@ -473,6 +559,7 @@ footer a:hover {
 
 .post-detail h2 {
   text-align: left;
+  margin-bottom: 0px;
 }
 
 .post-description {
@@ -480,6 +567,7 @@ footer a:hover {
   margin-bottom: 20px;
   text-align: left;
 }
+
 
 .post-description img {
   max-width: 100%;
@@ -499,6 +587,11 @@ footer a:hover {
   border-radius: 5px;
   padding: 5px 10px;
   cursor: pointer;
+}
+
+.edit-post-detail-btn {
+  margin-right: 5px;
+  font-size: 16px;
 }
 
 .post-comments {
@@ -663,6 +756,16 @@ footer a:hover {
   margin-bottom: 0;
 }
 
+.story-content p:nth-of-type(2) {
+  color: #555555;
+}
+
+
+.story-content p:last-child {
+  font-size: 14px;
+  color: #999999;
+  margin-bottom: 0;
+}
   
 .story-icons {
   display: flex;
@@ -686,6 +789,10 @@ footer a:hover {
   border-radius: 50%; 
 }
 
+.page-navigation {
+  text-align: right;
+  margin-right: 150px;
+}
 .next-page {
   text-align: center;
   margin: 20px 0;
@@ -694,34 +801,15 @@ footer a:hover {
 .next-page a {
   display: inline-block;
   padding: 8px 16px;
-  background-color: #2A7C6F;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 5px;
+  color: #2A7C6F;
+  text-decoration: underline;
 }
 
-.new-posts h2 {
+.post-map h2 {
   text-align: left;
   margin-left: 150px; 
 }
 
-.new-posts p {
-  margin-top: 5px; 
-  margin-bottom: 0;
-}
-
-.new-post {
-  width: calc(50% - 10px); 
-  border: 1px solid #2A7C6F;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-  margin-left: 150px; 
-  margin-right: 150px; 
-}
 
 .story-content p:last-child {
   font-size: 14px;
@@ -887,6 +975,29 @@ footer a:hover {
   padding-top: 30px; 
 }
 
+.my-posts-list{
+  text-align: left;
+  margin-left: 150px;
+}
+
+.comments-list{
+  text-align: left;
+  margin-left: 150px;
+}
+
+.comments-list li:first-child{
+  font-weight: bold;
+}
+
+.comments-list li:last-child{
+  color: #999999;
+}
+
+
+.notifications-list {
+  text-align: left;
+  margin-left: 150px;
+}
 /* ABOUT PAGE */
 
 .about-page {
