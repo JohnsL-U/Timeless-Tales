@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+<div class="edit-post">
+    <h2>Edit Post</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.media }} 
+        {{ form.as_p }}      
+        <div id="map" style="height: 400px; width: 100%;"></div>
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ API_KEY }}&libraries=places&callback=initMap"></script>
+        <script>
+            var map;
+            var marker;
+            function initMap() {
+                var lat = parseFloat('{{ post.latitude }}');
+                var lng = parseFloat('{{ post.longitude }}');
+
+                map = new google.maps.Map(document.getElementById('map'), {
+                    center: {lat: lat, lng: lng},
+                    zoom: 16
+                });
+                
+                marker = new google.maps.Marker({
+                    position: {lat: lat, lng: lng},
+                    map: map,
+                    draggable: true
+                });
+
+                document.getElementById('id_latitude').value = lat;
+                document.getElementById('id_longitude').value = lng;
+
+
+                var geocoder = new google.maps.Geocoder;
+
+                const input = document.getElementById('location');
+                const latitude = document.getElementById('latitude');
+                const longitude = document.getElementById('longitude');
+                const autocomplete = new google.maps.places.Autocomplete(input);
+                autocomplete.bindTo('bounds', map);
+            
+                autocomplete.addListener('place_changed', function() {
+                    const place = autocomplete.getPlace();
+                    if (!place.geometry) {
+                        window.alert("No details available for input: '" + place.name + "'");
+                        return;
+                    }
+            
+                    if (place.geometry.viewport) {
+                        map.fitBounds(place.geometry.viewport);
+                    } else {
+                        map.setCenter(place.geometry.location);
+                        map.setZoom(16);
+                    }
+            
+                    latitude.value = place.geometry.location.lat();
+                    longitude.value = place.geometry.location.lng();
+                    document.getElementById('place_name').value = place.name;
+                    document.getElementById('place_id').value = place.place_id;
+            
+                    marker.setPosition(place.geometry.location);
+                    marker.setVisible(true);
+                    updateFormFields(place);
+                });
+                function updateLocation(event) {
+                    const newLocation = event.latLng;
+                    map.setCenter(newLocation);
+                    map.setZoom(8);
+                    marker.setPosition(newLocation);
+                    geocoder.geocode({'location': newLocation}, function(results, status) {
+                        if (status === 'OK') {
+                            if (results[0]) {
+                                // Check if the address contains at least one space character
+                                if (results[0].formatted_address.indexOf(' ') >= 0) {
+                                    const place = {
+                                        geometry: {
+                                            location: newLocation
+                                        },
+                                        name: results[0].formatted_address,
+                                        place_id: ''
+                                    };
+
+                                    updateFormFields(place);
+                                    input.value = results[1].formatted_address;
+                                } else {
+                                    window.alert('No valid address found for this location');
+                                }
+                            } else {
+                                window.alert('No results found');
+                            }
+                        } else {
+                            window.alert('Geocoder failed due to: ' + status);
+                        }
+                    });
+                }
+
+
+                google.maps.event.addListener(map, 'click', updateLocation);
+                google.maps.event.addListener(marker, 'dragend', updateLocation);
+
+
+                function updateFormFields(place) {
+                    document.getElementById('latitude').value = place.geometry.location.lat();
+                    document.getElementById('longitude').value = place.geometry.location.lng();
+                    document.getElementById('place_name').value = place.name;
+                    document.getElementById('place_id').value = place.place_id;
+                }
+            }
+            function toggleTimeOption() {
+                var includeTimeCheckbox = document.getElementById('id_include_time');
+                var timeOptionalField = document.getElementById('id_time');
+
+                if (includeTimeCheckbox.checked) {
+                    timeOptionalField.removeAttribute('disabled');
+                } else {
+                    timeOptionalField.setAttribute('disabled', 'disabled');
+                }
+            }
+            
+            window.onload = function() {
+                toggleTimeOption();
+                document.getElementById('id_include_time').addEventListener('change', toggleTimeOption);
+            }
+        </script>
+        <button type="submit">Update Post</button>
+    </form>
+</div>
+
+{% endblock %}
+
