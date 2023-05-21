@@ -70,7 +70,7 @@
             {% for post in posts %}
                 <li>
                     <a href="{% url 'webapp:post_detail' post.id %}">{{ post.title }}</a>
-                    <p>{{ post.description.html|safe | truncatewords:20}}</p>
+                    <p>{{ post.description.html|striptags | truncatewords:20}}</p>
                 </li>
             {% empty %}
                 <li>You have not created any posts yet.</li>
@@ -94,7 +94,9 @@
         <h3>Comments</h3>
         <ul>
             {% for comment in comments %}
-                <li>{{ comment.user.username }} - {{ comment.created_date }}<br>{{ comment.content }}</li>
+                <li>{{ comment.user.username }}</li>
+                <li>{{ comment.content }}</li>
+                <li>{{ comment.created_date }}</li>
             {% empty %}
                 <li>No comments yet.</li>
             {% endfor %}
