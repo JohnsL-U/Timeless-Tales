@@ -1,6 +1,8 @@
-Django~=3.2.10
-django.contrib.gis
-virtualenv
+Django~=4.2
 django-quill-editor
 beautifulsoup4  
-bleach  
+bleach
+python-decouple
+psycopg2
+Pillow
+  
