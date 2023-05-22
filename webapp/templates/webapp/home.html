@@ -14,6 +14,13 @@
         <a href="{% url 'webapp:create_a_post' %}" onclick="togglePosts();">New Post</a>
         <a href="{% url 'webapp:user_profile_own' %}" onclick="toggleProfile();">Profile</a>
     </div>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
     <!-- User header section -->
     <div class="home-header">
         <h2>Share Your World </h2>
@@ -21,16 +28,41 @@
     </div>
     <div class="post-list">
         <h2>Posts from Followed</h2>
-        {% for post in followed_posts %}
+        {% for post in followed_posts|slice:":2" %}
             <div class="followed-posts">
                 {% with post.description.html|safe|extract_first_image as image_src %}
                     {% if image_src %}
                         <img src="{{ image_src }}" alt="{{ post.title }} first image">
+                    {% else %}
+                        <img src="{% static 'images/default-story.jpg' %}" alt="Default image">
                     {% endif %}
                 {% endwith %}
                 <div class="followed-posts-content">
                     <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
-                    <p>{{ post.description.html|safe | truncatewords:10}}</p>
+                    <p>{{ post.description.html|striptags | truncatewords:10}}</p>
+                    <p>{{ post.location }}</p>
+                    {% if post.memory_date %}
+                        <p>{{ post.memory_date }}
+                        {% if post.include_time %}
+                            at {{ post.time }}
+                        {% endif %}</p>
+                    {% else %}
+                        {% if post.season and post.year and post.decade %}
+                            <p>{{ post.get_season_display }}, {{ post.year }}, {{ post.decade }}s</p>
+                        {% elif post.season and post.year %}
+                            <p>{{ post.get_season_display }}, {{ post.year }}</p>
+                        {% elif post.year and post.decade %}
+                            <p>{{ post.year }}, {{ post.decade }}s</p>
+                        {% elif post.season and post.decade %}
+                            <p>{{ post.get_season_display }}, {{ post.decade }}s</p>
+                        {% elif post.season %}
+                            <p>{{ post.get_season_display }}</p>
+                        {% elif post.year %}
+                            <p>{{ post.year }}</p>
+                        {% elif post.decade %}
+                            <p>{{ post.decade }}s</p>
+                        {% endif %}
+                    {% endif %}
                 </div>
                 <div class="followed-posts-icons">
                     <i class="fas fa-thumbs-up"></i> <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
@@ -40,17 +72,51 @@
         {% empty %}
             <p>You are not following any users or they have not created any posts yet.</p>
         {% endfor %}
+        <div class="page-navigation">
+            <span>Page {{ followed_posts.number }} of {{ followed_posts.paginator.num_pages }}</span>
+            {% if followed_posts.has_previous %}
+                <a href="?page={{ followed_posts.previous_page_number }}">&laquo; Previous Page</a>
+            {% endif %}
+            {% if followed_posts.has_next %}
+                <a href="?page={{ followed_posts.next_page_number }}">Next Page &raquo;</a>
+            {% endif %}
+        </div>        
         <h2>Most Popular Posts</h2>
-        {% for post in most_liked_posts %}
+        {% for post in most_liked_posts|slice:":3" %}
             <div class="most-liked-posts">
                 {% with post.description.html|safe|extract_first_image as image_src %}
                     {% if image_src %}
                         <img src="{{ image_src }}" alt="{{ post.title }} first image">
+                    {% else %}
+                        <img src="{% static 'images/default-story.jpg' %}" alt="Default image">
                     {% endif %}
                 {% endwith %}
                 <div class="user-posts-content">
                     <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
-                    <p>{{ post.description.html|safe | truncatewords:10}}</p>
+                    <p>{{ post.description.html|striptags | truncatewords:10}}</p>
+                    <p>{{ post.location }}</p>
+                    {% if post.memory_date %}
+                        <p>{{ post.memory_date }}
+                        {% if post.include_time %}
+                            at {{ post.time }}
+                        {% endif %}</p>
+                    {% else %}
+                        {% if post.season and post.year and post.decade %}
+                            <p>{{ post.get_season_display }}, {{ post.year }}, {{ post.decade }}s</p>
+                        {% elif post.season and post.year %}
+                            <p>{{ post.get_season_display }}, {{ post.year }}</p>
+                        {% elif post.year and post.decade %}
+                            <p>{{ post.year }}, {{ post.decade }}s</p>
+                        {% elif post.season and post.decade %}
+                            <p>{{ post.get_season_display }}, {{ post.decade }}s</p>
+                        {% elif post.season %}
+                            <p>{{ post.get_season_display }}</p>
+                        {% elif post.year %}
+                            <p>{{ post.year }}</p>
+                        {% elif post.decade %}
+                            <p>{{ post.decade }}s</p>
+                        {% endif %}
+                    {% endif %}
                 </div>
                 <div class="user-posts-icons">
                     <i class="fas fa-thumbs-up"></i> <strong>Likes:</strong> {{ post.likes.count }} &nbsp;
@@ -59,7 +125,16 @@
             </div>
         {% empty %}
             <p>There are no posts yet.</p>
-        {% endfor %}   
+        {% endfor %} 
+        <div class="page-navigation">
+            <span>Page {{ most_liked_posts.number }} of {{ most_liked_posts.paginator.num_pages }}</span>
+            {% if most_liked_posts.has_previous %}
+                <a href="?page_most_liked={{ most_liked_posts.previous_page_number }}">&laquo; Previous Page</a>
+            {% endif %}
+            {% if most_liked_posts.has_next %}
+                <a href="?page_most_liked={{ most_liked_posts.next_page_number }}">Next Page &raquo;</a>
+            {% endif %}
+        </div>        
     </div>
 </div>
 {% endblock %}
