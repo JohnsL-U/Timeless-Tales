@@ -8,7 +8,28 @@
         <div class="author-info">
             <img src="{{ post.user.profile.profile_pic.url }}" alt="{{ post.user.username }} profile picture">
             <a class="author-name" href="{% url 'webapp:user_profile_other' post.user.username %}">{{ post.user.username }}</a>
-            <p>Created at: {{ post.created_date }}</p>
+            {% if post.memory_date %}
+                <p>Memory date: {{ post.memory_date }}
+                {% if post.include_time %}
+                    at {{ post.time }}
+                {% endif %}</p>
+            {% else %}
+                {% if post.season and post.year and post.decade %}
+                    <p>{{ post.get_season_display }}, {{ post.year }}, {{ post.decade }}s</p>
+                {% elif post.season and post.year %}
+                    <p>{{ post.get_season_display }}, {{ post.year }}</p>
+                {% elif post.year and post.decade %}
+                    <p>{{ post.year }}, {{ post.decade }}s</p>
+                {% elif post.season and post.decade %}
+                    <p>{{ post.get_season_display }}, {{ post.decade }}s</p>
+                {% elif post.season %}
+                    <p>{{ post.get_season_display }}</p>
+                {% elif post.year %}
+                    <p>{{ post.year }}</p>
+                {% elif post.decade %}
+                    <p>{{ post.decade }}s</p>
+                {% endif %}
+            {% endif %}
             <p>Published on: {{ post.published_date }}</p>
         </div>
         <div class="post-actions">
@@ -17,16 +38,34 @@
                 <form method="post" action="{% url 'webapp:like_post' post.id %}" style="display: inline;" id="likeForm">
                     {% csrf_token %}
                     {% if request.user in post.likes.all %}
-                        <button type="submit" class="like-btn" data-liked="true">Unlike</button>
+                      <button type="submit" class="like-btn" data-liked="true">
+                        <i class="fas fa-thumbs-up"></i> Unlike
+                      </button>
                     {% else %}
-                        <button type="submit" class="like-btn" data-liked="false">Like</button>
+                      <button type="submit" class="like-btn" data-liked="false">
+                        <i class="far fa-thumbs-up"></i> Like
+                      </button>
                     {% endif %}
-                </form>                
+                </form>                          
             </p>
+            {% if request.user == post.user %}
+                <a href="{% url 'webapp:post_edit' post.id %}" class="edit-post-detail-btn">Edit</a>
+            {% endif %}        
         </div>
     </div>
     <div class="post-description">
         <h2>{{ post.title }}</h2>
+        <div class="post-category">
+            {% if post.category %}
+                <strong>Category:</strong> <span class="category">{{ post.get_category_display }}</span>
+            {% endif %}
+            {% if post.tags %}
+                <strong>Tags:</strong>
+                {% for category in post.tags|split:"," %}
+                    <span class="category">{{ category }}</span>{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
         <p>{{ post.description.html|safe}}</p>
         <p id="location-name">{{ post.location }}</p>
         <div id="map" style="height: 400px; width: 100%;"></div>
