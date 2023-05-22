@@ -1,12 +1,20 @@
 {% extends 'base.html' %}
 
 {% load custom_filters %}
+{% load static %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css">
 {% endblock %}
 
 {% block content %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 <div class="search-page">
     <div class="nav-bar">
         <div class="left-buttons">
@@ -30,18 +38,27 @@
                         <button class="dropdown-btn">Search</button>
                         <div class="dropdown-content">
                             <label>
-                                <input type="radio" name="search_type" value="season" checked> Season
-                                <select name="season">
+                                <input type="checkbox" id="season-checkbox"> Season
+                                <select name="season" id="season-select">
                                     <option value="">Select Season</option>
-                                    <option value="winter">Winter</option>
-                                    <option value="spring">Spring</option>
-                                    <option value="summer">Summer</option>
-                                    <option value="autumn">Autumn</option>
+                                    <option value="Winter">Winter</option>
+                                    <option value="Spring">Spring</option>
+                                    <option value="Summer">Summer</option>
+                                    <option value="Fall">Fall</option>
                                 </select>
                             </label>
                             <label>
-                                <input type="radio" name="search_type" value="decade"> Decade
-                                <select name="decade">
+                                <input type="checkbox" id="year-checkbox"> Year
+                                <select name="year" id="year-select">
+                                    <option value="">Select Year</option>
+                                    {% for year in year_range %}
+                                        <option value="{{ year }}">{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="decade-checkbox"> Decade
+                                <select name="decade" id="decade-select">
                                     <option value="">Select Decade</option>
                                     {% for decade in decades %}
                                         <option value="{{ decade }}">{{ decade }}s</option>
@@ -49,15 +66,54 @@
                                 </select>
                             </label>
                             <label>
-                                <input type="radio" name="search_type" value="keyword" id="search-keyword"> Keyword
-                                <input type="text" name="search" class="search-input" id="search-input" placeholder="Search by keywords..." disabled>
+                                <input type="checkbox" id="keyword-checkbox"> Keyword
+                                <input type="text" name="search" class="search-input" id="search-input" placeholder="Search by keywords...">
                             </label>
                             <label>
-                                <input type="radio" name="search_type" value="daterange"> Date Range
-                                <input type="text" id="date-range-picker" name="date_range" placeholder="Select date range..." disabled>
-                            </label>                            
+                                <input type="checkbox" id="daterange-checkbox"> Date Range
+                                <select name="daterange" id="daterange">
+                                    <option value="year">Year</option>
+                                    <option value="date">Date</option>
+                                </select>
+                                <select name="start_year" id="start-date">
+                                    <option value="">Start Year</option>
+                                    {% for year in year_range %}
+                                        <option value="{{ year }}" {% if start_year == year %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="start_month" id="start-month">
+                                    <option value="">Start Month</option>
+                                    {% for month in month_range %}
+                                        <option value="{{ month }}" {% if start_month == month %}selected{% endif %}>{{ month }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="start_day" id="start-day">
+                                    <option value="">Start Day</option>
+                                    {% for day in day_range %}
+                                    <option value="{{ day }}" {% if start_day == day %}selected{% endif %}>{{ day }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="end_year" id="end-date">
+                                    <option value="">End Year</option>
+                                    {% for year in year_range %}
+                                        <option value="{{ year }}" {% if end_year == year %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="end_month" id="end-month">
+                                    <option value="">End Month</option>
+                                    {% for month in month_range %}
+                                        <option value="{{ month }}" {% if end_month == month %}selected{% endif %}>{{ month }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="end_day" id="end-day">
+                                    <option value="">End Day</option>
+                                    {% for day in day_range %}
+                                        <option value="{{ day }}" {% if end_day == day %}selected{% endif %}>{{ day }}</option>
+                                    {% endfor %}
+                                </select>                          
+                            </label>
                             <button type="submit">Submit</button>
-                        </div>
+                        </div>                        
                     </div>
                 </form>
             </div>
@@ -77,13 +133,36 @@
                 {% with post.description.html|safe|extract_first_image as image_src %}
                     {% if image_src %}
                         <img src="{{ image_src }}" alt="{{ post.title }} first image">
+                    {% else %}
+                        <img src="{% static 'images/default-story.jpg' %}" alt="Default image">
                     {% endif %}
                 {% endwith %}
                 <div class="story-content">
                     <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
-                    <p>{{ post.description.html|safe | truncatewords:10}}</p>
+                    <p>{{ post.description.html|striptags | truncatewords:10}}</p>
                     <p>{{ post.location }}</p>
-                    <p>{{ post.created_date }}</p>
+                    {% if post.memory_date %}
+                        <p>{{ post.memory_date }}
+                        {% if post.include_time %}
+                            at {{ post.time }}
+                        {% endif %}</p>
+                    {% else %}
+                        {% if post.season and post.year and post.decade %}
+                            <p>{{ post.get_season_display }}, {{ post.year }}, {{ post.decade }}s</p>
+                        {% elif post.season and post.year %}
+                            <p>{{ post.get_season_display }}, {{ post.year }}</p>
+                        {% elif post.year and post.decade %}
+                            <p>{{ post.year }}, {{ post.decade }}s</p>
+                        {% elif post.season and post.decade %}
+                            <p>{{ post.get_season_display }}, {{ post.decade }}s</p>
+                        {% elif post.season %}
+                            <p>{{ post.get_season_display }}</p>
+                        {% elif post.year %}
+                            <p>{{ post.year }}</p>
+                        {% elif post.decade %}
+                            <p>{{ post.decade }}s</p>
+                        {% endif %}
+                    {% endif %}
                 </div>
                 <div class="user-section">
                     {% if post.user.profile.profile_pic %}
@@ -97,80 +176,113 @@
                 </div>
             </div>
         {% endfor %}
-        {% if posts.has_next %}
-            <div class="next-page">
-                <span>Page {{ posts.number }} of {{ posts.paginator.num_pages }}</span>
+        <div class="page-navigation">
+            <span>Page {{ posts.number }} of {{ posts.paginator.num_pages }}</span>
+            {% if posts.has_previous %}
+                <a href="?page={{ posts.previous_page_number }}">&laquo; Previous Page</a>
+            {% endif %}
+            {% if posts.has_next %}
                 <a href="?page={{ posts.next_page_number }}">Next Page &raquo;</a>
-            </div>
-        {% else %}
-            <div class="current-page">
-                <span>Page {{ posts.number }}</span>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
-    <div class="new-posts">
+    <div class="post-map">
         <h2>Post Map</h2>    
         <div id="map" style="height: 400px; width: calc(100% - 300px); margin: 0 auto;"></div>
         <script>
         function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 3,
-            center: {lat: 35, lng: 320}
-        });
-        {% for post in posts %}
-        var marker = new google.maps.Marker({
-            position: {lat: {{ post.latitude }}, lng: {{ post.longitude }}},
-            map: map,
-            title: "{{ post.title }}"
-        });
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 3,
+                center: {lat: 35, lng: 320}
+            });
+            {% for post in all_posts %}
+                var marker = new google.maps.Marker({
+                    position: {lat: {{ post.latitude }}, lng: {{ post.longitude }}},
+                    map: map,
+                    title: "{{ post.title }}"
+                });
 
-        marker.addListener('click', function() {
-            window.location.href = "{% url 'webapp:post_detail' post.pk %}";
-        });
-        {% endfor %}
+                marker.addListener('click', function() {
+                    window.location.href = "{% url 'webapp:post_detail' post.pk %}";
+                });
+            {% endfor %}
         }
         </script>
         <script async defer src="https://maps.googleapis.com/maps/api/js?key={{ API_KEY }}&callback=initMap"></script>
-    </div>
+    </div>      
 </div>
 {% endblock %}
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/litepicker/dist/js/main.js"></script>
 <script>
-    document.querySelector('.dropdown-btn').addEventListener('click', function() {
-      var content = document.querySelector('.dropdown-content');
-      content.style.display = content.style.display === 'block' ? 'none' : 'block';
-    });
-    var searchInputs = document.querySelectorAll('.dropdown-content select, .dropdown-content input[type="text"], .dropdown-content input[type="date"]');
-    var searchTypeRadios = document.querySelectorAll('.dropdown-content input[type="radio"]');
-    searchTypeRadios.forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            searchInputs.forEach(function(input) {
-                input.disabled = true;
-            });
-            var inputToEnable = document.querySelector('.dropdown-content input[name="' + radio.value + '"], .dropdown-content select[name="' + radio.value + '"]');
-            if (inputToEnable) {
-                inputToEnable.disabled = false;
-            }
-        });
-    });
-    document.getElementById('search-keyword').addEventListener('change', function() {
-    var searchInput = document.getElementById('search-input');
-    if (this.checked) {
-      searchInput.disabled = false;
-    } else {
-      searchInput.disabled = true;
+    // Get reference to all checkboxes and select fields
+    var seasonCheckbox = document.getElementById('season-checkbox');
+    var yearCheckbox = document.getElementById('year-checkbox');
+    var decadeCheckbox = document.getElementById('decade-checkbox');
+    var keywordCheckbox = document.getElementById('keyword-checkbox');
+    var daterangeCheckbox = document.getElementById('daterange-checkbox');
+    
+    var seasonSelect = document.getElementById('season-select');
+    var yearSelect = document.getElementById('year-select');
+    var decadeSelect = document.getElementById('decade-select');
+    var keywordInput = document.getElementById('search-input');
+    var daterangeSelect = document.getElementById('daterange');
+    var startYearSelect = document.getElementById('start-date');
+    var startMonthSelect = document.getElementById('start-month');
+    var startDaySelect = document.getElementById('start-day');
+    var endYearSelect = document.getElementById('end-date');
+    var endMonthSelect = document.getElementById('end-month');
+    var endDaySelect = document.getElementById('end-day');
+    
+    var enableDisableField = function(checkbox, field) {
+        if (checkbox.checked) {
+            field.disabled = false;
+        } else {
+            field.disabled = true;
+        }
     }
-    });
-    document.querySelector('.dropdown-content input[type="radio"]:checked').dispatchEvent(new Event('change'));
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var dateRangePicker = new Litepicker({
-            element: document.getElementById('date-range-picker'),
-            singleMode: false,
-            format: 'YYYY-MM-DD',
-            delimiter: ' - ',
-  });
-});
+    var enableDisableDateRangeFields = function() {
+        if (daterangeCheckbox.checked) {
+            if (daterangeSelect.value === 'year') {
+                startMonthSelect.disabled = true;
+                startDaySelect.disabled = true;
+                endMonthSelect.disabled = true;
+                endDaySelect.disabled = true;
+                startYearSelect.disabled = false;
+                endYearSelect.disabled = false;
+            } else {
+                startMonthSelect.disabled = false;
+                startDaySelect.disabled = false;
+                endMonthSelect.disabled = false;
+                endDaySelect.disabled = false;
+                startYearSelect.disabled = false;
+                endYearSelect.disabled = false;
+            }
+        } else {
+            startYearSelect.disabled = true;
+            startMonthSelect.disabled = true;
+            startDaySelect.disabled = true;
+            endYearSelect.disabled = true;
+            endMonthSelect.disabled = true;
+            endDaySelect.disabled = true;
+        }
+    }
+
+    window.onload = function() {
+        seasonSelect.disabled = true;
+        yearSelect.disabled = true;
+        decadeSelect.disabled = true;
+        keywordInput.disabled = true;
+        enableDisableDateRangeFields();
+    }
+
+    seasonCheckbox.addEventListener('change', function() { enableDisableField(this, seasonSelect); });
+    yearCheckbox.addEventListener('change', function() { enableDisableField(this, yearSelect); });
+    decadeCheckbox.addEventListener('change', function() { enableDisableField(this, decadeSelect); });
+    keywordCheckbox.addEventListener('change', function() { enableDisableField(this, keywordInput); });
+    daterangeCheckbox.addEventListener('change', enableDisableDateRangeFields);
+    daterangeSelect.addEventListener('change', enableDisableDateRangeFields);
 </script>
 {% endblock %}
+
+        
