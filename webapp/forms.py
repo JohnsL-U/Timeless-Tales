@@ -4,8 +4,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from .models import Post, Comment, UserProfile
-from django.forms import DateInput
+from django.forms import DateInput, TimeInput
 from django_quill.forms import QuillFormField
+
 
 
 class LoginForm(AuthenticationForm):
@@ -31,15 +32,50 @@ class SignUpForm(UserCreationForm):
         return password1
     
 class PostForm(forms.ModelForm):
-    description = QuillFormField()
-    created_date = forms.DateField(widget=DateInput(attrs={'type': 'date'}))
+    memory_date = forms.DateTimeField(
+        widget=DateInput(attrs={'type': 'date'}),
+        required=False
+    )
+    include_time = forms.BooleanField(required=False, initial=False)
+    time = forms.TimeField(required=False, widget=TimeInput(attrs={'type': 'time'}), input_formats=['%H:%M'])
     latitude = forms.DecimalField(widget=forms.HiddenInput(), required=True)
-    longitude = forms.DecimalField(widget=forms.HiddenInput(), required=True) 
+    longitude = forms.DecimalField(widget=forms.HiddenInput(), required=True)
+    tags = forms.CharField(
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Separate multiple tags with commas'}),
+    )
+    
+
     class Meta:
         model = Post
-        fields = ['title', 'description', 'location', 'category', 'created_date']
-        widgets = {'location': forms.TextInput(attrs={'id': 'location'})
-                }
+        fields = ['title', 'description', 'location', 'category', 'tags', 'memory_date', 'include_time', 'time', 'season', 'decade', 'year']
+        widgets = {'location': forms.TextInput(attrs={'id': 'location'})}
+
+    def __init__(self, *args, **kwargs):
+        super(PostForm, self).__init__(*args, **kwargs)
+        self.fields['time'].widget.attrs['disabled'] = 'disabled'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        include_time = cleaned_data.get('include_time', False)
+        time_optional = cleaned_data.get('time')
+
+        if include_time and not time_optional:
+            self.add_error('time', "Please enter a valid time.")
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        tags = self.cleaned_data['tags']
+
+        if tags:
+            categories_list = [cat.strip() for cat in tags.split(',') if cat.strip()]
+            instance.tags = ', '.join(categories_list)
+
+        if commit:
+            instance.save()
+
+        return instance
     
     
 class ContactForm(forms.Form):
@@ -66,3 +102,4 @@ class EditProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ('profile_pic', 'background_pic', 'about')
+
