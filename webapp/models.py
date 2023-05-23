@@ -91,7 +91,7 @@ class Notification(models.Model):
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,related_name='profile')
     about = models.CharField(max_length=500, blank=True)
-    profile_pic = models.ImageField(upload_to='profile_pictures/', default='images/default_profile_pic.png')
+    profile_pic = models.ImageField(upload_to='profile_pictures/', default='images/default-profile.png')
     background_pic = models.ImageField(upload_to='background_pictures/', null=True, blank=True)
     following = models.ManyToManyField(User, related_name='followers', blank=True)
     join_date = models.DateField(default=timezone.now)
