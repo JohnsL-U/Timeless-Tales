@@ -29,8 +29,7 @@ GOOGLE_API_KEY = config("API_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "18.185.57.242"]
-
+ALLOWED_HOSTS = ["127.0.0.1", config("HOST_IP")]
 
 # Application definition
 
@@ -53,6 +52,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware"
 ]
 
 
@@ -148,3 +148,4 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = "2525"
 
 LOGIN_REDIRECT_URL = "webapp:home"
+
