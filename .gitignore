@@ -181,6 +181,8 @@ cython_debug/
 
 /media/
 
+.DS_Store
+
 # Ignore video files
 *.mp4
 *.mov
