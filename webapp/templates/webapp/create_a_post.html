@@ -8,8 +8,25 @@
     <h2>Create a new post</h2>
     <form method="post" action="" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.media }} 
-        {{ form.as_p }}
+        {{ form.media }}
+        <p>{{ form.title.label_tag }} {{ form.title }}</p>
+        <p>{{ form.description.label_tag }} {{ form.description }}</p>
+        <p>{{ form.location.label_tag }} {{ form.location }}</p>
+        <p>{{ form.category.label_tag }} {{ form.category }}</p>
+        <p>{{ form.tags.label_tag }} {{ form.tags }}</p>
+
+        <fieldset>
+            <legend>Memory Date and Time</legend>
+            <p>{{ form.include_interval.label_tag }} {{ form.include_interval }}</p>
+            <p>{{ form.date.label_tag }} {{ form.date }}</p>
+            <p>{{ form.end_date.label_tag }} {{ form.end_date }}</p>
+            <p>{{ form.include_time.label_tag }} {{ form.include_time }}</p>
+            <p>{{ form.time.label_tag }} {{ form.time }}</p>
+            <p>{{ form.season.label_tag }} {{ form.season }}</p>
+            <p>{{ form.decade.label_tag }} {{ form.decade }}</p>
+            <p>{{ form.year.label_tag }} {{ form.year }}</p>
+            <p>{{ form.end_year.label_tag }} {{ form.end_year }}</p>
+        </fieldset> 
         <input type="hidden" name="latitude" id="latitude" value="{{ form.initial.latitude }}">
         <input type="hidden" name="longitude" id="longitude" value="{{ form.initial.longitude }}">
         <input type="hidden" name="place_name" id="place_name" value="{{ form.initial.place_name }}">
@@ -105,6 +122,20 @@
                 }
             }
 
+            function toggleDateRangeOption() {
+                    var isDateRangeCheckbox = document.getElementById('id_include_interval');
+                    var memoryEndDateField = document.getElementById('id_end_date');
+                    var endYearField = document.getElementById('id_end_year');
+
+                    if (isDateRangeCheckbox.checked) {
+                        memoryEndDateField.removeAttribute('disabled');
+                        endYearField.removeAttribute('disabled');
+                    } else {
+                        memoryEndDateField.setAttribute('disabled', 'disabled');
+                        endYearField.setAttribute('disabled', 'disabled');
+                    }
+                }
+
             function toggleTimeOption() {
                 var includeTimeCheckbox = document.getElementById('id_include_time');
                 var timeOptionalField = document.getElementById('id_time');
@@ -117,7 +148,9 @@
             }
             window.onload = function() {
                 toggleTimeOption();
+                toggleDateRangeOption();
                 document.getElementById('id_include_time').addEventListener('change', toggleTimeOption);
+                document.getElementById('id_include_interval').addEventListener('change', toggleDateRangeOption);
             }
         </script>
         <button type="submit">Publish Your Post</button>
