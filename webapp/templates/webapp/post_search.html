@@ -125,6 +125,7 @@
     </div>
     <div class="post-search-create-post-button">
         <button onclick="location.href='{% url 'webapp:create_a_post' %}';">Create a Post</button>
+        <button onclick="location.href='{% url 'webapp:post_search' %}';">Reset Search</button>
     </div>
     <div class="featured-stories">
         <h2>All Posts</h2>
@@ -141,8 +142,8 @@
                     <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
                     <p>{{ post.description.html|striptags | truncatewords:10}}</p>
                     <p>{{ post.location }}</p>
-                    {% if post.memory_date %}
-                        <p>{{ post.memory_date }}
+                    {% if post.date %}
+                        <p>{{ post.date }}
                         {% if post.include_time %}
                             at {{ post.time }}
                         {% endif %}</p>

@@ -8,8 +8,8 @@
         <div class="author-info">
             <img src="{{ post.user.profile.profile_pic.url }}" alt="{{ post.user.username }} profile picture">
             <a class="author-name" href="{% url 'webapp:user_profile_other' post.user.username %}">{{ post.user.username }}</a>
-            {% if post.memory_date %}
-                <p>Memory date: {{ post.memory_date }}
+            {% if post.date %}
+                <p>Memory date: {{ post.date }}
                 {% if post.include_time %}
                     at {{ post.time }}
                 {% endif %}</p>
