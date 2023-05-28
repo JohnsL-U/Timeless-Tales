@@ -159,37 +159,48 @@ def post_search(request):
     if search_decade:
         start_decade = int(search_decade)
         end_decade = start_decade + 9
-        posts = posts.filter(Q(year__range=(start_decade, end_decade)) | 
-                             Q(memory_date__year__range=(start_decade, end_decade)))
+        posts = posts.filter(Q(year__range=(start_decade, end_decade)) | Q(date__year__range=(start_decade, end_decade)))
 
     if search_year:
-        posts = posts.filter(Q(year=search_year)| Q(memory_date__year=search_year))
+        posts = posts.filter(Q(year=search_year)| Q(date__year=search_year))
         
     if search_season:
         if search_season == 'Winter':
-            posts = posts.filter(Q(season=search_season) | Q(memory_date__month__in=[12, 1, 2]))
+            posts = posts.filter(Q(season=search_season) | Q(date__month__in=[12, 1, 2]))
         elif search_season == 'Spring':
-            posts = posts.filter(Q(season=search_season) | Q(memory_date__month__in=[3, 4, 5]))
+            posts = posts.filter(Q(season=search_season) | Q(date__month__in=[3, 4, 5]))
         elif search_season == 'Summer':
-            posts = posts.filter(Q(season=search_season) | Q(memory_date__month__in=[6, 7, 8]))
+            posts = posts.filter(Q(season=search_season) | Q(date__month__in=[6, 7, 8]))
         elif search_season == 'Fall':
-            posts = posts.filter(Q(season=search_season) | Q(memory_date__month__in=[9, 10, 11]))
+            posts = posts.filter(Q(season=search_season) | Q(date__month__in=[9, 10, 11]))
 
 
     if chosen_categories:
-        posts = posts.filter(Q(category__in=chosen_categories)).order_by('memory_date')
+        posts = posts.filter(Q(category__in=chosen_categories)).order_by('date')
     else:
-        posts = posts.order_by('memory_date')
+        posts = posts.order_by('date')
         
 
     if start_year or end_year:  
         if search_daterange == 'year':
             if start_year and end_year: 
-                posts = posts.filter(Q(year__range=(start_year, end_year)) | Q(memory_date__year__range=(start_year, end_year)))
+                posts = posts.filter(
+                    Q(year__range=(start_year, end_year)) | 
+                    Q(end_year__range=(start_year, end_year)) |
+                    Q(date__year__range=(start_year, end_year))
+                )
             elif start_year:  
-                posts = posts.filter(Q(year__gte=start_year) | Q(memory_date__year__gte=start_year))
+                posts = posts.filter(
+                    Q(year__gte=start_year) | 
+                    Q(end_year__gte=start_year) |
+                    Q(date__year__gte=start_year)
+                )
             elif end_year:  
-                posts = posts.filter(Q(year__lte=end_year) | Q(memory_date__year__lte=end_year))
+                posts = posts.filter(
+                    Q(year__lte=end_year) |
+                    Q(end_year__lte=end_year) |
+                    Q(date__year__lte=end_year)
+                )
         else:  
             if start_year:
                 start_date = datetime.date(int(start_year), int(start_month), int(start_day))
@@ -200,15 +211,21 @@ def post_search(request):
                 end_date = datetime.date(int(end_year), int(end_month), int(end_day))
             else:
                 end_date = None
-
+            
             if start_date and end_date: 
-                posts = posts.filter(memory_date__range=(start_date, end_date))
+                posts = posts.filter(Q(date__range=(start_date, end_date)) | 
+                                 Q(end_date__range=(start_date, end_date))
+                                )
             elif start_date: 
-                posts = posts.filter(memory_date__gte=start_date)
+                posts = posts.filter(Q(date__gte=start_date) | 
+                                    Q(end_date__gte=start_date)
+                                    )
             elif end_date:  
-                posts = posts.filter(memory_date__lte=end_date)
+                posts = posts.filter(Q(date__lte=end_date) | 
+                                    Q(end_date__lte=end_date)
+                                    )
                 
-    posts = posts.order_by('memory_date')
+    posts = posts.order_by('date')
     paginator = Paginator(posts, 4)
     page = request.GET.get('page')
     posts = paginator.get_page(page)
