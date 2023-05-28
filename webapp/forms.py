@@ -32,8 +32,13 @@ class SignUpForm(UserCreationForm):
         return password1
     
 class PostForm(forms.ModelForm):
-    memory_date = forms.DateTimeField(
-        widget=DateInput(attrs={'type': 'date'}),
+    include_interval = forms.BooleanField(required=False, initial=False)
+    date = forms.DateField(
+            widget=forms.DateInput(attrs={'type': 'date'}),
+            required=False
+    )
+    end_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}),
         required=False
     )
     include_time = forms.BooleanField(required=False, initial=False)
@@ -49,7 +54,7 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ['title', 'description', 'location', 'category', 'tags', 'memory_date', 'include_time', 'time', 'season', 'decade', 'year']
+        fields = ['title', 'description', 'location', 'category', 'tags', 'include_interval','date', 'end_date', 'include_time', 'time', 'season', 'decade', 'year', 'end_year']
         widgets = {'location': forms.TextInput(attrs={'id': 'location'})}
 
     def __init__(self, *args, **kwargs):
