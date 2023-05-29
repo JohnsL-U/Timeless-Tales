@@ -142,7 +142,12 @@
                     <h3><a href="{% url 'webapp:post_detail' post.pk %}">{{ post.title|truncatewords:5 }}</a></h3>
                     <p>{{ post.description.html|striptags | truncatewords:10}}</p>
                     <p>{{ post.location }}</p>
-                    {% if post.date %}
+                    {% if post.date and post.end_date %}
+                        <p>{{ post.date }} - {{ post.end_date }}
+                        {% if post.include_time %}
+                            at {{ post.time }}
+                        {% endif %}</p>
+                    {% elif post.date %}
                         <p>{{ post.date }}
                         {% if post.include_time %}
                             at {{ post.time }}
