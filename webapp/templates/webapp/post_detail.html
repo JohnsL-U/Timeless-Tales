@@ -18,6 +18,8 @@
                 {% if post.include_time %}
                     at {{ post.time }}
                 {% endif %}</p>
+            {% elif post.year and post.end_year %}
+                <p>Memory Year: {{ post.year }} - {{ post.end_year }}</p>
             {% else %}
                 {% if post.season and post.year and post.decade %}
                     <p>{{ post.get_season_display }}, {{ post.year }}, {{ post.decade }}s</p>
